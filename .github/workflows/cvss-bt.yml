@@ -28,7 +28,7 @@ jobs:
     
     - name: Download EPSS scores
       run: |
-          mkdir -p data
+          mkdir -p data/epss
           TZ=America/New_York
           #today=$(date +%Y-%m-%d)
           today=2023-11-21
