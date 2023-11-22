@@ -1,8 +1,6 @@
 name: Run Enrichment Process
 
 on:
-  schedule:
-    - cron: "0 12-18 * * *" # Every day between 12pm and 6pm UTC, 8am and 2pm EST
   push:
     branches:
       - main
