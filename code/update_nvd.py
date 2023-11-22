@@ -7,50 +7,48 @@ import requests
 
 
 def fetch_updates(api_key):
-    url = 'https://services.nvd.nist.gov/rest/json/cves/2.0'
+    url = 'https://services.nvd.nist.gov/rest/json/cves/2.0?noRejected'
     headers = {'API-Key': api_key}
 
     params = {
-        'resultsPerPage': 2000,
+        'resultsPerPage': 1000,
         'startIndex': 0
     }
 
     count = 0
+    max_retries = 5
+    retry_delay = 10  # seconds
+
     while True:
-        count += 1
-        response = requests.get(url, headers=headers, params=params)
-        if response.status_code != 200:
-            print(f"Failed to fetch data: {response.status_code}")
-            sys.exit(1)
+        try:
+            import requests.exceptions
 
-        data = response.json()
+            count += 1
+            response = requests.get(url, headers=headers, params=params)
 
-        vulnerabilities = data.get('vulnerabilities', {})
-        if not vulnerabilities:
-            break
+            if response.status_code != 200:
+                raise requests.exceptions.HTTPError(f"Failed to fetch data: {response.status_code}")
 
-        if count == 1:
-            total_vulns = data.get('totalResults', 0)
-            print(f"Total results: {total_vulns}")
+            data = response.json()
+            vulnerabilities = data.get('vulnerabilities', {})
+            if not vulnerabilities:
+                break
 
-        for vuln in vulnerabilities:
-            #extract year from CVE ID
-            year = vuln['cve']['id'].split('-')[1]
-            
-            #save each CVE by year into a file labeled with the year
-            with open(f"data/nvd/nvd_vulns_{year}.json", "a", encoding='utf-8') as json_file:
-                json.dump(vuln, json_file)
-                json_file.write('\n')
+            params['startIndex'] += len(vulnerabilities)
+            if len(vulnerabilities) < params['resultsPerPage']:
+                break
 
-        #Print total number of CVEs received so far
-        print(f"Page {count} received {len(data.get('vulnerabilities', []))} CVEs")
-        print(f"Total CVEs received so far: {params['startIndex'] + len(data.get('vulnerabilities', []))}")
+            time.sleep(6)  # Delay for 6 seconds between requests per NVD guidance
 
-        params['startIndex'] += len(vulnerabilities)
-        if len(vulnerabilities) < params['resultsPerPage']:
-            break
-
-        time.sleep(6)  # Delay for 6 seconds between requests per NVD guidance
+        except Exception as e:
+            print(e)
+            if max_retries > 0:
+                max_retries -= 1
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print("Maximum retries reached. Exiting.")
+                sys.exit(1)
 
     for year in range(1999, datetime.now().year + 1):
         reformat_json_file(f'data/nvd/nvd_vulns_{year}.json')
