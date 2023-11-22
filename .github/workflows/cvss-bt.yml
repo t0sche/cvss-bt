@@ -10,7 +10,7 @@ on:
 permissions:
   contents: write
 jobs:
-  fetch-data:
+  publish:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
@@ -28,8 +28,9 @@ jobs:
     
     - name: Download EPSS scores
       run: |
-          TZ=EST5EDT
-          today=$(date +%Y-%m-%d)
+          TZ=America/New_York
+          #today=$(date +%Y-%m-%d)
+          today=2023-11-21
           url="https://epss.cyentia.com/epss_scores-${today}.csv.gz"
           echo $url
           response=$(curl -s -o /dev/null -w "%{http_code}" "$url")
