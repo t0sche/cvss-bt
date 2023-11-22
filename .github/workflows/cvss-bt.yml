@@ -1,0 +1,68 @@
+name: Fetch NVD Data
+
+on:
+  schedule:
+    - cron: "0 12-18 * * *" # Every day between 12pm and 6pm UTC, 8am and 2pm EST
+  push:
+    branches:
+      - main
+      - dev
+permissions:
+  contents: write
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r code/requirements.txt
+    
+    - name: Download EPSS scores
+      run: |
+          TZ=America/New_York
+          today=$(date +%Y-%m-%d)
+          url="https://epss.cyentia.com/epss_scores-${today}.csv.gz"
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+          echo $response
+          if [ "$response" -eq 200 ]; then
+              curl -o data/epss/epss_scores-${today}.csv "$url"
+              echo "EPSS scores downloaded successfully"
+          else
+              echo "EPSS scores not available yet for today"
+              exit 1
+          fi
+
+    - name: Fetch and Save NVD Data
+      run: |
+        mkdir -p data/nvd
+        python -u code/update_nvd.py
+      env:
+        NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+    
+    - name: Process Data
+      run: |
+        echo "Processing NVD data..."
+        python -u code/process_nvd.py
+
+    - name: Run Enrichment Process
+      run: |
+        python -u code/enrich_nvd.py
+
+    - name: Delete temp data
+      run: |
+        rm -rf data
+
+    - name: Commit and push if there are changes
+      run: |
+        git add .
+        git commit -m "Updated CVSS-BT data $(date +%Y-%m-%d)" -a || exit 0
+        git push
