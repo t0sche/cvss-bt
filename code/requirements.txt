@@ -1,0 +1,3 @@
+cvss
+pandas
+requests
