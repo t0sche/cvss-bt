@@ -38,3 +38,7 @@ This repository continuously enriches and publishes CVSSv3.x Temporal Scores bas
 
 ## To Do
 - CVSSv4 Threat Metrics
+
+## Acknowledgements
+
+This product uses the NVD API but is not endorsed or certified by the NVD.
