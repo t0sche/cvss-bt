@@ -2,7 +2,7 @@ from urllib.request import urlopen
 from datetime import date
 import json
 import pandas as pd
-from cvss import CVSS3
+from cvss import CVSS3, CVSS2
 
 
 EPSS_CSV = f'data/epss/epss_scores-{date.today()}.csv'
@@ -80,7 +80,6 @@ def update_temporal_score(df, epss_threshold):
     """
     Update temporal score and severity based on exploit maturity
     """
-
     df['exploit_maturity'] = 'E:U'  # Default value
 
     # First condition for 'E:H'
@@ -99,8 +98,14 @@ def update_temporal_score(df, epss_threshold):
 
     # Apply CVSS computation row-wise
     def compute_cvss(row):
-        c = CVSS3(row['cvss-bt_vector'])
-        return c.temporal_score, c.severities()[1].upper()
+        if '3' in row['cvss_version']:
+            c = CVSS3(row['cvss-bt_vector'])
+            return c.temporal_score, c.severities()[1].upper()
+        elif '2' in row['cvss_version']:
+            c = CVSS2(row['cvss-bt_vector'])
+            return c.temporal_score, c.severities()[1].upper()
+        else:
+            return 'UNKNOWN', 'UNKNOWN'
 
     # Extracting CVSS scores and severities
     df[['cvss-bt_score', 'cvss-bt_severity']] = df.apply(compute_cvss, axis=1, result_type='expand')
@@ -131,4 +136,4 @@ columns = [
 
 cvss_bt_df = nvd_df[columns]
 
-cvss_bt_df.to_csv(f'cvss-bt-{date.today()}.csv', index=False)
+cvss_bt_df.to_csv(f'cvss-bt.csv', index=False)
