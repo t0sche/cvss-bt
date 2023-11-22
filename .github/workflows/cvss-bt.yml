@@ -28,7 +28,7 @@ jobs:
     
     - name: Download EPSS scores
       run: |
-          TZ=America/New_York
+          TZ=EST5EDT
           today=$(date +%Y-%m-%d)
           url="https://epss.cyentia.com/epss_scores-${today}.csv.gz"
           echo $url
