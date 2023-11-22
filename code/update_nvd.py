@@ -24,7 +24,7 @@ def fetch_updates(api_key):
             import requests.exceptions
 
             count += 1
-            response = requests.get(url, headers=headers, params=params, timeout=10)
+            response = requests.get(url, headers=headers, params=params)
 
             if response.status_code != 200:
                 raise requests.exceptions.HTTPError(f"Failed to fetch data: {response.status_code}")
