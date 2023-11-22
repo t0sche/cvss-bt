@@ -136,4 +136,4 @@ columns = [
 
 cvss_bt_df = nvd_df[columns]
 
-cvss_bt_df.to_csv(f'cvss-bt-{date.today()}.csv', index=False)
+cvss_bt_df.to_csv(f'cvss-bt.csv', index=False)
