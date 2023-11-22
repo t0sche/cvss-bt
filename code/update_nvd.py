@@ -11,7 +11,7 @@ def fetch_updates(api_key):
     headers = {'API-Key': api_key}
 
     params = {
-        'resultsPerPage': 1000,
+        'resultsPerPage': 2000,
         'startIndex': 0
     }
 
@@ -53,7 +53,7 @@ def fetch_updates(api_key):
             if len(vulnerabilities) < params['resultsPerPage']:
                 break
 
-            time.sleep(6)  # Delay for 6 seconds between requests per NVD guidance
+            time.sleep(1)  # Delay to avoid hitting rate limit
 
         except Exception as e:
             print(e)
