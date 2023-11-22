@@ -16,21 +16,12 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.11'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r code/requirements.txt
-    
     - name: Download EPSS scores
       run: |
           mkdir -p data/epss
           TZ=America/New_York
-          today=$(date +%Y-%m-%d)
+          #today=$(date +%Y-%m-%d)
+          today=2023-11-20
           url="https://epss.cyentia.com/epss_scores-${today}.csv.gz"
           echo $url
           response=$(curl -s -o /dev/null -w "%{http_code}" "$url")
@@ -42,6 +33,16 @@ jobs:
               echo "EPSS scores not available yet for today"
               exit 1
           fi
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r code/requirements.txt
 
     - name: Fetch and Save NVD Data
       run: |
