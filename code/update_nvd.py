@@ -21,8 +21,6 @@ def fetch_updates(api_key):
 
     while True:
         try:
-            import requests.exceptions
-
             count += 1
             response = requests.get(url, headers=headers, params=params)
 
@@ -33,6 +31,23 @@ def fetch_updates(api_key):
             vulnerabilities = data.get('vulnerabilities', {})
             if not vulnerabilities:
                 break
+            
+            if count == 1:
+                total_vulns = data.get('totalResults', 0)
+                print(f"Total results: {total_vulns}")
+
+            for vuln in vulnerabilities:
+                #extract year from CVE ID
+                year = vuln['cve']['id'].split('-')[1]
+
+                #save each CVE by year into a file labeled with the year
+                with open(f"data/nvd/nvd_vulns_{year}.json", "a", encoding='utf-8') as json_file:
+                    json.dump(vuln, json_file)
+                    json_file.write('\n')
+
+            #Print total number of CVEs received so far
+            print(f"Page {count} received {len(data.get('vulnerabilities', []))} CVEs")
+            print(f"Total CVEs received so far: {params['startIndex'] + len(data.get('vulnerabilities', []))}")
 
             params['startIndex'] += len(vulnerabilities)
             if len(vulnerabilities) < params['resultsPerPage']:
