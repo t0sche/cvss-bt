@@ -23,7 +23,7 @@ def process_nvd():
                 for entry in nvd_data:
                     cve = entry['cve']['id']
                     print(cve)
-                    for version in ["cvssMetricV4", "cvssMetricV31", "cvssMetricV30"]:
+                    for version in ["cvssMetricV4", "cvssMetricV31", "cvssMetricV30", "cvssMetricV2"]:
                         if version in entry['cve']['metrics']:
                             highest_cvss_data = version
                         else:
@@ -51,10 +51,6 @@ def process_nvd():
                         base_vector = cvss_data['vectorString']
                     except KeyError:
                         base_vector = ''
-                    try:
-                        description = ''.join(i['value'] for i in entry['cve']['descriptions'] if i['lang'] == 'en')
-                    except KeyError:
-                        description = ''
 
                     new_row = {
                         'cve': cve,
@@ -63,7 +59,7 @@ def process_nvd():
                         'base_severity': base_severity,
                         'base_vector': base_vector
                     }
-                    if not description.startswith('**') and cvss_version: #disputed, rejected, v3.x and up
+                    if cvss_version:
                         row_accumulator.append(new_row)
 
     nvd = pd.DataFrame(row_accumulator)
