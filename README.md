@@ -13,8 +13,8 @@ Source: https://www.first.org/cvss/v3.1/specification-document
 
 | Value | Description | CVE Present In |
 |---------------------------|-------------|-------------|
-| High (H)                  | Functional autonomous code exists, or no exploit is required (manual trigger) and details are widely available. Exploit code works in every situation, or is actively being delivered via an autonomous agent (such as a worm or virus). Network-connected systems are likely to encounter scanning or exploitation attempts. Exploit development has reached the level of reliable, widely available, easy-to-use automated tools. | CISA KEV, EPSS > Threshold |
-| Functional (F)            | Functional exploit code is available. The code works in most situations where the vulnerability exists. | Metasploit, Nucelei |
+| High (H)                  | Functional autonomous code exists, or no exploit is required (manual trigger) and details are widely available. Exploit code works in every situation, or is actively being delivered via an autonomous agent (such as a worm or virus). Network-connected systems are likely to encounter scanning or exploitation attempts. Exploit development has reached the level of reliable, widely available, easy-to-use automated tools. | CISA KEV, EPSS > Threshold, Metasploit |
+| Functional (F)            | Functional exploit code is available. The code works in most situations where the vulnerability exists. | Nucelei |
 | Proof-of-Concept (P)      | Proof-of-concept exploit code is available. The code might not work in all situations. | ExploitDB |
 | Unproven (U)              | No exploit code is available, or an exploit is theoretical. | CVE not present in any threat intelligence source above. |
 | Not Defined (X)           | Assigning this value to the metric will not influence the score. It means the user does not have enough information to assign a score. | We drop this value since we have information to assign a score. |
