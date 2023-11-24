@@ -37,6 +37,11 @@ jobs:
                 exit 1
             fi
         
+        - name: setup git config
+          run: |
+            git config user.name "GitHub Actions Bot"
+            git config user.email "<>"
+        
         - name: Commit and Push Changes
           run: |
             git add .
