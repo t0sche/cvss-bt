@@ -4,6 +4,7 @@ import time
 import sys
 import os
 import requests
+import collections
 
 
 def fetch_updates(api_key, last_mod_start_date):
@@ -37,15 +38,36 @@ def fetch_updates(api_key, last_mod_start_date):
             if count == 1:
                 total_vulns = data.get('totalResults', 0)
                 print(f"Total results: {total_vulns}")
+                
+            # Load all JSON files into a dictionary in memory
+            data_col = collections.defaultdict(list)
+            for year in range(1999, datetime.today().year):
+                file_path = f"data/nvd/nvd_vulns_{year}.json"
+                if os.path.exists(file_path):
+                    with open(file_path, 'r', encoding='utf-8') as json_file:
+                        data[year] = json.load(json_file)
 
             for vuln in vulnerabilities:
-                #extract year from CVE ID
-                year = vuln['cve']['id'].split('-')[1]
+            # Extract year from CVE ID
+                year = int(vuln['cve']['id'].split('-')[1])
 
-                #save each CVE by year into a file labeled with the year
-                with open(f"data/nvd/nvd_vulns_{year}.json", "a", encoding='utf-8') as json_file:
-                    json.dump(vuln, json_file)
-                    json_file.write('\n')
+                # Find the index of the existing entry with the same CVE ID as the new data, if it exists
+                index = next((index for (index, d) in enumerate(data_col[year]) if d['cve']['id'] == vuln['cve']['id']), None)
+
+                # If an existing entry was found, replace it with the new data
+                if index is not None:
+                    print(f"Updating CVE data: {vuln['cve']['id']}")
+                    data_col[year][index] = vuln
+                # Otherwise, add the new data to the end of the list
+                else:
+                    print(f"Adding new CVE data: {vuln['cve']['id']}")
+                    data_col[year].append(vuln)
+
+            # Write the updated data back to the JSON files
+            for year, vulns in data_col.items():
+                file_path = f"data/nvd/nvd_vulns_{year}.json"
+                with open(file_path, 'w', encoding='utf-8') as json_file:
+                    json.dump(vulns, json_file, ensure_ascii=False)
 
             #Print total number of CVEs received so far
             print(f"Page {count} received {len(data.get('vulnerabilities', []))} CVEs")
@@ -67,21 +89,6 @@ def fetch_updates(api_key, last_mod_start_date):
                 print("Maximum retries reached. Exiting.")
                 sys.exit(1)
 
-    for year in range(1999, datetime.now().year + 1):
-        reformat_json_file(f'data/nvd/nvd_vulns_{year}.json')
-
-
-def reformat_json_file(file_path):
-    try:
-        with open(file_path, 'r') as file:
-            # Read line-separated JSON objects into a list
-            data = [json.loads(line) for line in file]
-
-        with open(file_path, 'w') as file:
-            # Write the list as a JSON array
-            json.dump(data, file, indent=4)
-    except Exception as e:
-        print(f"Error occurred while reformating JSON file: {e}")
         
 def read_last_run_timestamp(filename='last_run.txt'):
     try:
