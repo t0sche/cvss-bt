@@ -5,11 +5,14 @@ Enriching the NVD CVSS scores to include Temporal/Threat Metrics
 
 The Common Vulnerability Scoring System (CVSS) is an industry standard for assessing the severity of computer system security vulnerabilities. CVSS attempts to establish a measure of how severe a vulnerability is based on its attributes.
 
-The National Vulnerability Database includes CVSS Base scores in its catalog, but base scores are not enough to effectively prioritizie or contextualize vulnerabilities. In this repository I continuously enrich the CVSSv3.x score by using the Exploit Code Maturity (E) Temporal Metric.
+The National Vulnerability Database includes CVSS Base scores in its catalog, but base scores are not enough to effectively prioritizie or contextualize vulnerabilities. In this repository I continuously enrich the CVSS score by using the Exploit Code Maturity/Exploitability (E) Temporal Metric.
 
-### Temporal Metric - Exploit Code Maturity (E)
+### Temporal Metric - Exploit Code Maturity/Exploitability (E)
 
-Source: https://www.first.org/cvss/v3.1/specification-document
+Sources: 
+- https://www.first.org/cvss/v3.1/specification-document
+- https://www.first.org/cvss/v3.0/specification-document
+- https://www.first.org/cvss/v2/guide
 
 | Value | Description | CVE Present In |
 |---------------------------|-------------|-------------|
@@ -20,9 +23,8 @@ Source: https://www.first.org/cvss/v3.1/specification-document
 | Not Defined (X)           | Assigning this value to the metric will not influence the score. It means the user does not have enough information to assign a score. | We drop this value since we have information to assign a score. |
 
 
-
 ## Features
-This repository continuously enriches and publishes CVSSv3.x Temporal Scores based on the following threat intelligence:
+This repository continuously enriches and publishes CVSS Temporal Scores based on the following threat intelligence:
 
 - CISA KEV
 - EPSS
@@ -31,8 +33,8 @@ This repository continuously enriches and publishes CVSSv3.x Temporal Scores bas
 - ExploitDB
 
 ### Steps
-- Fetches CVSS scores from NVD every 6 hours
 - Fetches EPSS scores every morning
+- Fetches CVSS scores from NVD if there are new EPSS scores.
 - Calculates the Exploit Code Maturity/Exploitability (E) Metric when new data is found.
 - Provides a resulting CVSS-BT score for each CVE
 
