@@ -40,7 +40,6 @@ jobs:
 
         - name: Commit and Push Changes
           run: |
-              git lfs track "*.json"  # Track large data files with Git LFS
               git add .
-              git commit -m "Updated CVSS-BT data $(date +%Y-%m-%d)"
+              git commit -m "Updated NVD data $(date +%Y-%m-%d)"
               git push
