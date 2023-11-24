@@ -45,7 +45,6 @@ jobs:
         
         - name: Commit and Push Changes
           run: |
-            git lfs track "*.csv"
             git add .
             git commit -m "Updated EPSS data"
             git push
