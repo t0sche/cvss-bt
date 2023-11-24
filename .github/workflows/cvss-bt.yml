@@ -29,6 +29,11 @@ jobs:
       run: |
         python -u code/enrich_nvd.py
 
+    - name: setup git config
+      run: |
+        git config user.name "GitHub Actions Bot"
+        git config user.email "<>"
+    
     - name: Commit and push if there are changes
       run: |
         git add .
