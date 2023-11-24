@@ -14,11 +14,11 @@ jobs:
       steps:
         - name: Checkout Repository
           uses: actions/checkout@v2
-
-        - name: Setup Git LFS
-          run: |
-            apt-get install git-lfs
-            git lfs install
+          with:
+            lfs: true
+        
+        - name: Checkout LFS objects
+          run: git lfs checkout
         
         - name: Set up Python
           uses: actions/setup-python@v2
