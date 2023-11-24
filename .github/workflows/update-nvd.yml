@@ -1,0 +1,45 @@
+name: Update NVD Data
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'  # This will run the action every two hours
+  workflow_dispatch:
+
+permissions:
+    contents: write
+    
+jobs:
+    update-data:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v2
+
+        - name: Setup Git LFS
+          run: |
+            apt-get install git-lfs
+            git lfs install
+        
+        - name: Set up Python
+          uses: actions/setup-python@v2
+          with:
+            python-version: '3.11'
+
+        - name: Install dependencies
+          run: |
+            python -m pip install --upgrade pip
+            pip install -r code/requirements.txt
+
+        - name: Process NVD Data
+          run: |
+            mkdir -p data/nvd
+            python -u code/update_nvd.py
+            python -u code/process_nvd.py
+          env:
+            NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+
+        - name: Commit and Push Changes
+          run: |
+              git add .
+              git commit -m "Updated NVD data $(date +%Y-%m-%d)"
+              git push

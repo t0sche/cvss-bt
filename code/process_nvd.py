@@ -13,7 +13,7 @@ def process_nvd():
     """
     row_accumulator = []
     current_year = datetime.now().year
-    for year in range(1999, current_year):
+    for year in range(1999, current_year + 1):
         if not os.path.exists(BASE_NVD_FILE_PATH.replace('{year}', str(year))):
             print(f"File for {year} not found")
         else:
@@ -23,34 +23,35 @@ def process_nvd():
                 for entry in nvd_data:
                     cve = entry['cve']['id']
                     print(cve)
-                    for version in ["cvssMetricV4", "cvssMetricV31", "cvssMetricV30", "cvssMetricV2"]:
-                        if version in entry['cve']['metrics']:
-                            highest_cvss_data = version
-                        else:
-                            highest_cvss_data = ''
+
+                    highest_cvss_data = ''
+                    if "cvssMetricV4" in entry['cve']['metrics']:
+                        highest_cvss_data = "cvssMetricV4"
+                    elif "cvssMetricV31" in entry['cve']['metrics']:
+                        highest_cvss_data = "cvssMetricV31"
+                    elif "cvssMetricV30" in entry['cve']['metrics']:
+                        highest_cvss_data = "cvssMetricV30"
+                    elif "cvssMetricV2" in entry['cve']['metrics']:
+                        highest_cvss_data = "cvssMetricV2"
+
                     if not highest_cvss_data:
-                        continue #skip if no CVSS data
-                    cvss_data_gen = (x['cvssData'] for x in entry['cve']['metrics'][highest_cvss_data] if x['type'] == 'Primary')
+                        continue  # skip if no CVSS data
+
+                    cvss_data_gen_primary = ((x, x['cvssData']) for x in entry['cve']['metrics'][highest_cvss_data] if x['type'] == 'Primary')
+                    cvss_data_gen_secondary = ((x, x['cvssData']) for x in entry['cve']['metrics'][highest_cvss_data] if x['type'] == 'Secondary')
+
                     try:
-                        cvss_data = next(cvss_data_gen)
+                        cvss_data, cvss_vector = next(cvss_data_gen_primary)
                     except StopIteration:
-                        cvss_data = {}
-                    try:
-                        cvss_version = cvss_data['version']
-                    except KeyError:
-                        cvss_version = ''
-                    try:
-                        base_score = cvss_data['baseScore']
-                    except KeyError:
-                        base_score = ''
-                    try:
-                        base_severity = cvss_data['baseSeverity']
-                    except KeyError:
-                        base_severity = ''
-                    try:
-                        base_vector = cvss_data['vectorString']
-                    except KeyError:
-                        base_vector = ''
+                        cvss_data, cvss_vector  = next(cvss_data_gen_secondary)
+                    cvss_version = cvss_vector.get('version', '')
+                    base_score = cvss_vector.get('baseScore', '')
+                    if cvss_version == '2.0':
+                        base_severity = cvss_data.get('baseSeverity', '')
+                    else:
+                        base_severity = cvss_vector.get('baseSeverity', '')
+                    
+                    base_vector = cvss_vector.get('vectorString', '')
 
                     new_row = {
                         'cve': cve,
@@ -59,14 +60,16 @@ def process_nvd():
                         'base_severity': base_severity,
                         'base_vector': base_vector
                     }
+                    print(new_row)
                     if cvss_version:
                         row_accumulator.append(new_row)
 
     nvd = pd.DataFrame(row_accumulator)
-    print ('CVEs from NVD:', nvd['cve'].count())
+    print ('CVEs with CVSS scores from NVD:', nvd['cve'].nunique())
     return nvd
 
 if __name__ == '__main__':
 
     nvd_df = process_nvd()
+    nvd_df = nvd_df.drop_duplicates(subset=['cve'])
     nvd_df.to_csv('data/nvd.csv', index=False)
