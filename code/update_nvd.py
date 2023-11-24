@@ -6,13 +6,15 @@ import os
 import requests
 
 
-def fetch_updates(api_key):
+def fetch_updates(api_key, last_mod_start_date):
     url = 'https://services.nvd.nist.gov/rest/json/cves/2.0?noRejected'
     headers = {'API-Key': api_key}
 
     params = {
-        'resultsPerPage': 2000,
-        'startIndex': 0
+        'resultsPerPage': 200,
+        'startIndex': 0,
+        'lastModStartDate': last_mod_start_date,
+        'lastModEndDate': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
     }
 
     count = 0
@@ -53,7 +55,7 @@ def fetch_updates(api_key):
             if len(vulnerabilities) < params['resultsPerPage']:
                 break
 
-            time.sleep(1)  # Delay to avoid hitting rate limit
+            time.sleep(6)  # Delay per NVD API requirements
 
         except Exception as e:
             print(e)
@@ -80,8 +82,21 @@ def reformat_json_file(file_path):
             json.dump(data, file, indent=4)
     except Exception as e:
         print(f"Error occurred while reformating JSON file: {e}")
+        
+def read_last_run_timestamp(filename='data/nvdlast_run.txt'):
+    try:
+        with open(filename, 'r') as file:
+            return file.read().strip()
+    except FileNotFoundError:
+        return None
+
+def save_last_run_timestamp(filename='data/nvdlast_run.txt'):
+    with open(filename, 'w') as file:
+        file.write(datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))
+
 
 api_key = os.environ.get('NVD_API_KEY')
 if not api_key:
     raise ValueError("NVD API key is not set.")
 fetch_updates(api_key)
+save_last_run_timestamp()

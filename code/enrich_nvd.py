@@ -1,11 +1,11 @@
 from urllib.request import urlopen
-from datetime import date
 import json
 import pandas as pd
+import numpy as np
 from cvss import CVSS3, CVSS2
 
 
-EPSS_CSV = f'data/epss/epss_scores-{date.today()}.csv'
+EPSS_CSV = 'data/epss/epss_scores.csv.gz'
 METASPLOIT_JSON = 'https://raw.githubusercontent.com/rapid7/metasploit-framework/master/db/modules_metadata_base.json'
 NUCLEI_JSON = 'https://raw.githubusercontent.com/projectdiscovery/nuclei-templates/main/cves.json'
 EXPLOITDB_CSV = 'https://gitlab.com/exploit-database/exploitdb/-/raw/main/files_exploits.csv'
@@ -91,25 +91,31 @@ def update_temporal_score(df, epss_threshold):
 
     df.loc[condition_eh, 'exploit_maturity'] = 'E:H'
     df.loc[condition_ef, 'exploit_maturity'] = 'E:F'
-    df.loc[condition_ep, 'exploit_maturity'] = 'E:P'
+    df.loc[condition_ep & (df['cvss_version'] == 2.0), 'exploit_maturity'] = 'E:POC'
+    df.loc[condition_ep & (df['cvss_version'] != 2.0), 'exploit_maturity'] = 'E:P'
 
     # Update vector with exploit maturity
     df['cvss-bt_vector'] = df['base_vector'] + '/' + df['exploit_maturity']
 
-    # Apply CVSS computation row-wise
+    # Apply CVSS computation
     def compute_cvss(row):
-        if '3' in row['cvss_version']:
-            c = CVSS3(row['cvss-bt_vector'])
-            return c.temporal_score, c.severities()[1].upper()
-        elif '2' in row['cvss_version']:
-            c = CVSS2(row['cvss-bt_vector'])
-            return c.temporal_score, c.severities()[1].upper()
-        else:
+        try:
+            if '3' in str(row['cvss_version']):
+                c = CVSS3(row['cvss-bt_vector'])
+                return c.base_score, str(c.severities()[1]).upper()
+            elif '2' in str(row['cvss_version']):
+                c = CVSS2(row['cvss-bt_vector'])
+                return c.base_score, str(c.severities()[1]).upper()
+            else:
+                return 'UNKNOWN', 'UNKNOWN'
+        except Exception as e:
+            print(f'Error occurred while computing CVSS: {e}')
             return 'UNKNOWN', 'UNKNOWN'
 
     # Extracting CVSS scores and severities
-    df[['cvss-bt_score', 'cvss-bt_severity']] = df.apply(compute_cvss, axis=1, result_type='expand')
-
+    print('Computing CVSS-BT scores and severities')
+    df[['cvss-bt_score', 'cvss-bt_severity']] = df.apply(compute_cvss, axis=1, result_type='expand') 
+    
     return df
 
 
