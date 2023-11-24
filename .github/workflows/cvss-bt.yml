@@ -2,7 +2,7 @@ name: Run Enrichment Process
 
 on:
   workflow_run:
-    workflows: ["EPSS", "Update NVD"]
+    workflows: ["Get EPSS Data", "Update NVD Data"]
     types:
       - completed
 permissions:
