@@ -22,7 +22,6 @@ def process_nvd():
                 nvd_data = json.load(f)
                 for entry in nvd_data:
                     cve = entry['cve']['id']
-                    print(cve)
 
                     highest_cvss_data = ''
                     if "cvssMetricV4" in entry['cve']['metrics']:
@@ -60,7 +59,6 @@ def process_nvd():
                         'base_severity': base_severity,
                         'base_vector': base_vector
                     }
-                    print(new_row)
                     if cvss_version:
                         row_accumulator.append(new_row)
 

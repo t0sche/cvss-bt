@@ -97,6 +97,6 @@ def save_last_run_timestamp(filename='last_run.txt'):
 
 api_key = os.environ.get('NVD_API_KEY')
 if not api_key:
-    raise ValueError("NVD API key is not set.")0
+    raise ValueError("NVD API key is not set.")
 fetch_updates(api_key, read_last_run_timestamp())
 save_last_run_timestamp()
