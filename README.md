@@ -31,10 +31,14 @@ This repository continuously enriches and publishes CVSSv3.x Temporal Scores bas
 - ExploitDB
 
 ### Steps
-- Fetches CVSSv3.x scores from NVD every 6 hours
+- Fetches CVSS scores from NVD every 6 hours
 - Fetches EPSS scores every morning
-- Calculates the Exploit Code Maturity (E) Metric when new data is found.
-- Provides a resulting CVSS-BT score for CVSSv3.x
+- Calculates the Exploit Code Maturity/Exploitability (E) Metric when new data is found.
+- Provides a resulting CVSS-BT score for each CVE
+
+## Caveats
+- In the event that the NVD calculated score is using a lesser version than a secondary source, I use the higher CVSS version.
+- The EPSS threshold for returning an `E:H` value is .36, or 36%. This is based on the F1 score of the model and the 37% threshold where most CVEs have weaponized exploit code.
 
 ## To Do
 - CVSSv4 Threat Metrics
