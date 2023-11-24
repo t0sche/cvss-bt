@@ -5,6 +5,7 @@ on:
     workflows: ["Get EPSS Data", "Update NVD Data"]
     types:
       - completed
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:
