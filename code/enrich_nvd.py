@@ -5,7 +5,7 @@ import numpy as np
 from cvss import CVSS3, CVSS2
 
 
-EPSS_CSV = 'data/epss/epss_scores.csv.gz'
+EPSS_CSV = 'data/epss/epss_scores.csv'
 METASPLOIT_JSON = 'https://raw.githubusercontent.com/rapid7/metasploit-framework/master/db/modules_metadata_base.json'
 NUCLEI_JSON = 'https://raw.githubusercontent.com/projectdiscovery/nuclei-templates/main/cves.json'
 EXPLOITDB_CSV = 'https://gitlab.com/exploit-database/exploitdb/-/raw/main/files_exploits.csv'
@@ -22,7 +22,7 @@ def enrich(df, epss_csv):
     Enrich CVE data with EPSS, KEV, ExploitDB, Metasploit, and Nuclei data
     """
     #Load EPSS Data
-    epss_df = pd.read_csv(epss_csv, comment='#', compression='gzip')
+    epss_df = pd.read_csv(epss_csv, comment='#')
 
     #Load KEV Data
     with urlopen(KEV_JSON) as response:
