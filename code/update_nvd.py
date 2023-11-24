@@ -83,20 +83,20 @@ def reformat_json_file(file_path):
     except Exception as e:
         print(f"Error occurred while reformating JSON file: {e}")
         
-def read_last_run_timestamp(filename='data/nvdlast_run.txt'):
+def read_last_run_timestamp(filename='last_run.txt'):
     try:
         with open(filename, 'r') as file:
             return file.read().strip()
     except FileNotFoundError:
         return None
 
-def save_last_run_timestamp(filename='data/nvdlast_run.txt'):
+def save_last_run_timestamp(filename='last_run.txt'):
     with open(filename, 'w') as file:
         file.write(datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))
 
 
 api_key = os.environ.get('NVD_API_KEY')
 if not api_key:
-    raise ValueError("NVD API key is not set.")
-fetch_updates(api_key)
+    raise ValueError("NVD API key is not set.")0
+fetch_updates(api_key, read_last_run_timestamp())
 save_last_run_timestamp()
