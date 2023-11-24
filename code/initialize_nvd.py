@@ -6,20 +6,17 @@ import os
 import requests
 
 
-def fetch_updates(api_key, last_mod_start_date):
+def fetch_updates(api_key):
     url = 'https://services.nvd.nist.gov/rest/json/cves/2.0?noRejected'
     headers = {'API-Key': api_key}
 
     params = {
-        'resultsPerPage': 200,
-        'startIndex': 0,
-        'lastModStartDate': last_mod_start_date,
-        'lastModEndDate': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+        'resultsPerPage': 1000,
+        'startIndex': 0
     }
 
     count = 0
-    max_retries = 5
-    retry_delay = 10  # seconds
+    retry_delay = 6  # seconds
 
     while True:
         try:
@@ -55,17 +52,12 @@ def fetch_updates(api_key, last_mod_start_date):
             if len(vulnerabilities) < params['resultsPerPage']:
                 break
 
-            time.sleep(6)  # Delay per NVD API requirements
+            time.sleep(6)  # Delay per NVD API requirements, be gentle <3
 
         except Exception as e:
             print(e)
-            if max_retries > 0:
-                max_retries -= 1
-                print(f"Retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
-            else:
-                print("Maximum retries reached. Exiting.")
-                sys.exit(1)
+            print(f"Retrying in {retry_delay} seconds...")
+            time.sleep(retry_delay)
 
     for year in range(1999, datetime.now().year + 1):
         reformat_json_file(f'data/nvd/nvd_vulns_{year}.json')
@@ -82,13 +74,6 @@ def reformat_json_file(file_path):
             json.dump(data, file, indent=4)
     except Exception as e:
         print(f"Error occurred while reformating JSON file: {e}")
-        
-def read_last_run_timestamp(filename='data/nvdlast_run.txt'):
-    try:
-        with open(filename, 'r') as file:
-            return file.read().strip()
-    except FileNotFoundError:
-        return None
 
 def save_last_run_timestamp(filename='data/nvdlast_run.txt'):
     with open(filename, 'w') as file:
