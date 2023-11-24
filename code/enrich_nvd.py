@@ -102,10 +102,10 @@ def update_temporal_score(df, epss_threshold):
         try:
             if '3' in str(row['cvss_version']):
                 c = CVSS3(row['cvss-bt_vector'])
-                return c.base_score, str(c.severities()[1]).upper()
+                return c.temporal_score, str(c.severities()[1]).upper()
             elif '2' in str(row['cvss_version']):
                 c = CVSS2(row['cvss-bt_vector'])
-                return c.base_score, str(c.severities()[1]).upper()
+                return c.temporal_score, str(c.severities()[1]).upper()
             else:
                 return 'UNKNOWN', 'UNKNOWN'
         except Exception as e:
