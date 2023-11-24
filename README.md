@@ -42,4 +42,5 @@ This repository continuously enriches and publishes CVSSv3.x Temporal Scores bas
 ## Acknowledgements
 
 This product uses the NVD API but is not endorsed or certified by the NVD.
-This product uses EPSS scores but is not endoresed or cert
+
+This product uses EPSS scores but is not endoresed or certified by the EPSS SIG.
