@@ -1,0 +1,44 @@
+name: Get EPSS Data
+
+on:
+    schedule:
+      - cron: "0 10-18 * * *" # Every day from 10am to 6pm UTC, 6am to 2pm EST
+    workflow_dispatch:
+
+permissions:
+    contents: write
+
+jobs:
+    update-epss:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v2
+    
+        - name: Setup Git LFS
+          run: |
+            apt-get install git-lfs
+            git lfs install
+        
+        - name: Download EPSS scores
+          run: |
+            mkdir -p data/epss
+            TZ=America/New_York
+            today=$(date +%Y-%m-%d)
+            url="https://epss.cyentia.com/epss_scores-${today}.csv.gz"
+            echo $url
+            response=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+            echo $response
+            if [ "$response" -eq 200 ]; then
+                curl -o data/epss/epss_scores.csv.gz "$url"
+                echo "EPSS scores downloaded successfully"
+            else
+                echo "EPSS scores not available yet for today"
+                exit 1
+            fi
+        
+        - name: Commit and Push Changes
+          run: |
+            git add .
+            git commit -m "Updated EPSS data"
+            git push
