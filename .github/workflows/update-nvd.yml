@@ -1,9 +1,10 @@
 name: Update NVD Data
 
 on:
-  schedule:
-    - cron: '0 */2 * * *'  # This will run the action every two hours
-  workflow_dispatch:
+  workflow_run:
+    workflows: ["Get EPSS Data"]
+    types:
+      - completed
 
 permissions:
     contents: write
@@ -37,6 +38,11 @@ jobs:
             python -u code/process_nvd.py
           env:
             NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+
+        - name: setup git config
+          run: |
+            git config user.name "GitHub Actions Bot"
+            git config user.email "<>"
 
         - name: Commit and Push Changes
           run: |
