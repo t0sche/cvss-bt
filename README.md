@@ -42,6 +42,10 @@ This repository continuously enriches and publishes CVSS Temporal Scores based o
 - In the event that the NVD calculated score is using a lesser version than a secondary source, I use the higher CVSS version.
 - The EPSS threshold for returning an `E:H` value is .36, or 36%. This is based on the F1 score of the model and the 37% threshold where most CVEs have weaponized exploit code.
 
+## CVSS Visual Mapping
+This data visualization provides a breakdown of how the CVSS-B, CVSS-BT and CVSS enriched temporal metrics map to the defined OSINT sources as of November 25th, 2023
+![CVSS-BT Mapping](https://github.com/patrickmgarrity/cvss-bt/blob/main/CVSS-BT-Enrichment.png)
+
 ## To Do
 - CVSSv4 Threat Metrics
 
