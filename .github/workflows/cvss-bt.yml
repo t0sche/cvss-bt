@@ -44,5 +44,5 @@ jobs:
 
     - name: Tag commits
       run: |
-        git tag -a "v0.1.0-$(date +%Y.%m.%d)" -m "Tagging commits for publish workflow"
+        git tag -a "v$(date +%Y.%m.%d)" -m "Tagging commits for publish workflow"
         git push --tags
