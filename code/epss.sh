@@ -7,6 +7,7 @@ response=$(curl -s -o /dev/null -w "%{http_code}" "$url")
 echo $response
 if [ "$response" -eq 200 ]; then
     curl -o data/epss/epss_scores.csv.gz "$url"
+    gunzip -f data/epss/epss_scores.csv.gz
     echo "EPSS scores downloaded successfully"
 else
     echo "EPSS scores not available yet for today"
