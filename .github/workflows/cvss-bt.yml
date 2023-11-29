@@ -41,4 +41,4 @@ jobs:
         git add .
         git commit -m "Updated CVSS-BT data $(date +%Y-%m-%d)" -a || exit 0
         git tag -a "v$(date +%Y.%m.%d)" -m "Tagging commits for publish workflow"
-        git push
+        git push origin "v$(date +%Y.%m.%d)"
