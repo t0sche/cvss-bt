@@ -8,7 +8,7 @@ import enrich_nvd
 EPSS_CSV = f'https://epss.cyentia.com/epss_scores-{date.today()}.csv.gz'
 
 def fetch_updates(api_key, last_mod_start_date=None):
-    
+
     if last_mod_start_date:
         params = {
             'resultsPerPage': 1000,
@@ -40,7 +40,7 @@ def fetch_updates(api_key, last_mod_start_date=None):
             vulnerabilities = data.get('vulnerabilities', {})
             if not vulnerabilities:
                 break
-            
+
             if count == 1:
                 total_vulns = data.get('totalResults', 0)
                 print(f"Total results: {total_vulns}")
@@ -72,7 +72,7 @@ def fetch_updates(api_key, last_mod_start_date=None):
                     base_severity = cvss_data.get('baseSeverity', '')
                 else:
                     base_severity = cvss_vector.get('baseSeverity', '')
-                
+
                 base_vector = cvss_vector.get('vectorString', '')
                 new_row = {
                     'cve': cve,
@@ -114,7 +114,7 @@ def fetch_updates(api_key, last_mod_start_date=None):
             existing_df.update(nvd_df)
             print(existing_df.shape)
             existing_df.to_csv('cvss-bt.csv', index=False) #issue here - only saveing data from the nvd_df
-        
+
         else:
             print('Creating new CSV')
             nvd_df.to_csv('cvss-bt.csv', index=False)
@@ -150,7 +150,7 @@ def fetch_updates(api_key, last_mod_start_date=None):
         print('No new CVEs found')
         #Re-enrich the data to update the temporal scores
         print('Re-enriching data and re-scoring CVEs')
-        
+
         columns_to_keep = [
             'cve',
             'cvss_version',
@@ -161,10 +161,10 @@ def fetch_updates(api_key, last_mod_start_date=None):
         ]
 
         existing_cvss_bt_df = cvss_bt_df[columns_to_keep]
-        
+
         enriched_df = enrich_nvd.enrich(existing_cvss_bt_df, pd.read_csv(EPSS_CSV, comment='#', compression='gzip'))
         cvss_bt_df = enrich_nvd.update_temporal_score(enriched_df, enrich_nvd.EPSS_THRESHOLD)
-        
+
         columns = [
             'cve',
             'cvss-bt_score',
@@ -185,7 +185,7 @@ def fetch_updates(api_key, last_mod_start_date=None):
         cvss_bt_df = cvss_bt_df[columns]
 
         cvss_bt_df.to_csv('cvss-bt.csv', index=False, mode='w')
-        
+
 
 def save_last_run_timestamp(filename='last_run.txt'):
     with open(filename, 'w') as file:
