@@ -2,12 +2,14 @@ name: Run Enrichment Process
 
 on:
   workflow_run:
-    workflows: ["Update NVD Data"]
+    workflows: ["Check for new EPSS data"]
     types:
       - completed
   workflow_dispatch:
+
 permissions:
   contents: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -15,8 +17,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-      with:
-        lfs: true
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -29,7 +29,7 @@ jobs:
     
     - name: Run Enrichment Process
       run: |
-        python -u code/enrich_nvd.py
+        python -u code/process_nvd.py
 
     - name: setup git config
       run: |
@@ -40,7 +40,7 @@ jobs:
       run: |
         git add .
         git commit -m "Updated CVSS-BT data $(date +%Y-%m-%d)" -a || exit 0
-        git tag -a "v$(date +%Y.%m.%d)" -m "Tagging commits for publish workflow"
+        git tag -a "v$(date +%Y.%m.%d)" -m "Tagging for today's run"
         git push origin "v$(date +%Y.%m.%d)"
     
     - name: Create Release
