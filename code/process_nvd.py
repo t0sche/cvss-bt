@@ -8,6 +8,16 @@ import enrich_nvd
 EPSS_CSV = f'https://epss.cyentia.com/epss_scores-{date.today()}.csv.gz'
 
 def fetch_updates(api_key, last_mod_start_date=None):
+    """
+    Fetches updates from the NVD API and processes the data.
+
+    Args:
+        api_key (str): The API key for accessing the NVD API.
+        last_mod_start_date (str, optional): The start date for filtering the updates. Defaults to None.
+
+    Returns:
+        None
+    """
 
     if last_mod_start_date:
         params = {
