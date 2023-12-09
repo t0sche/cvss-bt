@@ -120,7 +120,7 @@ def fetch_updates(api_key, last_mod_start_date=None):
             nvd_df.to_csv('cvss-bt.csv', index=False)
             existing_df = pd.read_csv('cvss-bt.csv')
 
-        # Logic to call the enrich_nvd.py script to enrich the data with exploit maturity and temporal scores.
+        # Logic to enrich the data with exploit maturity and temporal scores.
         print('Enriching data')
         enriched_df = enrich_nvd.enrich(existing_df, pd.read_csv(EPSS_CSV, comment='#', compression='gzip'))
 
@@ -188,18 +188,24 @@ def fetch_updates(api_key, last_mod_start_date=None):
 
 
 def save_last_run_timestamp(filename='last_run.txt'):
-    with open(filename, 'w') as file:
-        file.write(datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))
+    """
+    Save the current timestamp as the last run timestamp in a file.
+
+    Args:
+        filename (str): The name of the file to save the timestamp. Default is 'last_run.txt'.
+    """
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write(datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))
 
 
-api_key = os.environ.get('NVD_API_KEY')
-if not api_key:
+nvd_key = os.environ.get('NVD_API_KEY')
+if not nvd_key:
     raise ValueError("NVD API key is not set.")
 
-last_run = None
+LAST_RUN = None
 if os.path.exists('last_run.txt'):
-    with open('last_run.txt', 'r') as file:
+    with open('last_run.txt', 'r', encoding='utf-8') as file:
         last_run = file.readline().strip()
 
-fetch_updates(api_key, last_run)
-save_last_run_timestamp()
+fetch_updates(nvd_key, LAST_RUN)
+save_last_run_timestamp('last_run.txt')
