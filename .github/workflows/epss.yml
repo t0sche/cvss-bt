@@ -22,7 +22,6 @@ jobs:
           
             - name: Sparse Checkout last_run.txt
               run: |
-                cd code
                 git sparse-checkout init --cone
                 git sparse-checkout set last_run.txt
                 git checkout
