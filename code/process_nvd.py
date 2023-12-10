@@ -6,6 +6,8 @@ import pandas as pd
 import enrich_nvd
 
 EPSS_CSV = f'https://epss.cyentia.com/epss_scores-{date.today()}.csv.gz'
+TIMESTAMP_FILE = './code/last_run.txt'
+
 
 def fetch_updates(api_key, last_mod_start_date=None):
     """
@@ -18,8 +20,10 @@ def fetch_updates(api_key, last_mod_start_date=None):
     Returns:
         None
     """
+    
 
     if last_mod_start_date:
+        print(f'Fetching updates from NVD API since last run at {last_mod_start_date}')
         params = {
             'resultsPerPage': 1000,
             'startIndex': 0,
@@ -27,6 +31,8 @@ def fetch_updates(api_key, last_mod_start_date=None):
             'lastModEndDate': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
         }
     else:
+        print(f'Fetching all data from NVD API. This may take a while.')
+        print(f'{last_mod_start_date}')
         params = {
             'resultsPerPage': 1000,
             'startIndex': 0
@@ -56,7 +62,7 @@ def fetch_updates(api_key, last_mod_start_date=None):
                 print(f"Total results: {total_vulns}")
 
             for entry in vulnerabilities:
-                #extract year from CVE ID
+                
                 cve = entry['cve']['id']
 
                 highest_cvss_data = ''
@@ -119,21 +125,33 @@ def fetch_updates(api_key, last_mod_start_date=None):
         if os.path.isfile('cvss-bt.csv'):
             print('Updating existing CSV')
             existing_df = pd.read_csv('cvss-bt.csv')
-            print(existing_df.shape)
-            print(nvd_df.shape)
-            existing_df.update(nvd_df)
-            print(existing_df.shape)
-            existing_df.to_csv('cvss-bt.csv', index=False) #issue here - only saveing data from the nvd_df
+            columns_to_keep = [
+                'cve',
+                'cvss_version',
+                'base_score',
+                'base_severity',
+                'base_vector',
+                'nvd_last_updated'
+            ]
+
+            existing_df = existing_df[columns_to_keep]
+            print(f'Existing DF Shape: {existing_df.shape}')
+            existing_df.columns = existing_df.columns.str.strip()
+            print(f'Existing DF Columns: {existing_df.columns.to_list()}')
+            
+            print(f'Incomcing DF Shape: {nvd_df.shape}')
+            print(f'Incoming DF Columns: {nvd_df.columns.to_list()}')
+
+            # Use combine_first to fill in values from nvd_df where existing_df has NaNs
+            combined_df = nvd_df.combine_first(existing_df)
 
         else:
             print('Creating new CSV')
-            nvd_df.to_csv('cvss-bt.csv', index=False)
-            existing_df = pd.read_csv('cvss-bt.csv')
-
+            combined_df = nvd_df
+            
         # Logic to enrich the data with exploit maturity and temporal scores.
         print('Enriching data')
-        enriched_df = enrich_nvd.enrich(existing_df, pd.read_csv(EPSS_CSV, comment='#', compression='gzip'))
-
+        enriched_df = enrich_nvd.enrich(combined_df, pd.read_csv(EPSS_CSV, comment='#', compression='gzip'))
         cvss_bt_df = enrich_nvd.update_temporal_score(enriched_df, enrich_nvd.EPSS_THRESHOLD)
 
         columns = [
@@ -204,8 +222,9 @@ def save_last_run_timestamp(filename='last_run.txt'):
     Args:
         filename (str): The name of the file to save the timestamp. Default is 'last_run.txt'.
     """
-    with open(filename, 'w', encoding='utf-8') as f:
+    with open(filename, 'w') as f:
         f.write(datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'))
+
 
 
 nvd_key = os.environ.get('NVD_API_KEY')
@@ -213,9 +232,10 @@ if not nvd_key:
     raise ValueError("NVD API key is not set.")
 
 LAST_RUN = None
-if os.path.exists('last_run.txt'):
-    with open('last_run.txt', 'r', encoding='utf-8') as file:
-        last_run = file.readline().strip()
+if os.path.exists(TIMESTAMP_FILE):
+    with open(TIMESTAMP_FILE, 'r') as file:
+        LAST_RUN = file.readline().strip()
+        
 
 fetch_updates(nvd_key, LAST_RUN)
-save_last_run_timestamp('last_run.txt')
+save_last_run_timestamp(TIMESTAMP_FILE)
