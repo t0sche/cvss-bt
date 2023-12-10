@@ -17,12 +17,10 @@ EPSS_THRESHOLD = 0.36
 At ~37%, the CVE is very likely to have weaponized exploit code
 """
 
-def enrich(df, epss_csv):
+def enrich(df, epss_df):
     """
     Enrich CVE data with EPSS, KEV, ExploitDB, Metasploit, and Nuclei data
     """
-    #Load EPSS Data
-    epss_df = pd.read_csv(epss_csv, comment='#')
 
     #Load KEV Data
     with urlopen(KEV_JSON) as response:
@@ -91,8 +89,8 @@ def update_temporal_score(df, epss_threshold):
 
     df.loc[condition_eh, 'exploit_maturity'] = 'E:H'
     df.loc[condition_ef, 'exploit_maturity'] = 'E:F'
-    df.loc[condition_ep & (df['cvss_version'] == 2.0), 'exploit_maturity'] = 'E:POC'
-    df.loc[condition_ep & (df['cvss_version'] != 2.0), 'exploit_maturity'] = 'E:P'
+    df.loc[condition_ep & (df['cvss_version'] == '2.0'), 'exploit_maturity'] = 'E:POC'
+    df.loc[condition_ep & (df['cvss_version'] != '2.0'), 'exploit_maturity'] = 'E:P'
 
     # Update vector with exploit maturity
     df['cvss-bt_vector'] = df['base_vector'] + '/' + df['exploit_maturity']
@@ -117,29 +115,3 @@ def update_temporal_score(df, epss_threshold):
     df[['cvss-bt_score', 'cvss-bt_severity']] = df.apply(compute_cvss, axis=1, result_type='expand') 
     
     return df
-
-
-nvd_df = pd.read_csv('data/nvd.csv')
-
-nvd_df = enrich(nvd_df, EPSS_CSV)
-nvd_df = update_temporal_score(nvd_df, EPSS_THRESHOLD)
-
-columns = [
-    'cve', 
-    'cvss-bt_score', 
-    'cvss-bt_severity', 
-    'cvss-bt_vector', 
-    'cvss_version', 
-    'base_score', 
-    'base_severity', 
-    'base_vector', 
-    'epss', 
-    'cisa_kev', 
-    'exploitdb', 
-    'metasploit', 
-    'nuclei'
-]
-
-cvss_bt_df = nvd_df[columns]
-
-cvss_bt_df.to_csv(f'cvss-bt.csv', index=False)

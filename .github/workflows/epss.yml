@@ -1,8 +1,8 @@
-name: Get EPSS Data
+name: Check for new EPSS data
 
 on:
     schedule:
-      - cron: "0 10-18 * * *" # Every day from 10am to 6pm UTC, 6am to 2pm EST
+      - cron: "0 11-16 * * *" # Every day from 11am to 4pm UTC, 7am to 12pm EST
     workflow_dispatch:
 
 permissions:
@@ -26,32 +26,3 @@ jobs:
                 echo "EPSS scores not available yet for today"
                 exit 1
             fi
-        
-        - name: Checkout Repository
-          uses: actions/checkout@v2
-          with:
-            lfs: true
-        
-        - name: Checkout LFS objects
-          run: git lfs checkout
-        
-        - name: Download EPSS scores
-          run: |
-            mkdir -p data/epss
-            TZ=America/New_York
-            today=$(date +%Y-%m-%d)
-            url="https://epss.cyentia.com/epss_scores-${today}.csv.gz"
-            curl -o data/epss/epss_scores.csv.gz "$url"
-            gunzip -f data/epss/epss_scores.csv.gz
-            echo "EPSS scores downloaded successfully"
-        
-        - name: setup git config
-          run: |
-            git config user.name "GitHub Actions Bot"
-            git config user.email "<>"
-        
-        - name: Commit and Push Changes
-          run: |
-            git add .
-            git commit -m "Updated EPSS data $(date +%Y-%m-%d)"
-            git push
