@@ -45,6 +45,7 @@ jobs:
       run: |
         git add .
         git commit -m "Updated CVSS-BT data $(date +%Y-%m-%d)" -a || exit 0
+        git push origin HEAD:main
         git tag -a "$tag" -m "Updated CVSS-BT data $(date +%Y-%m-%d)"
         git push origin "$tag"
 
