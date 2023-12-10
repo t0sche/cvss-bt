@@ -37,21 +37,25 @@ jobs:
         git config user.name "GitHub Actions Bot"
         git config user.email "<>"
     
+    - name: Generate tag
+      id: generate_tag
+      run: echo "::set-output name=tag::v$(date +%Y.%m.%d)"
+
     - name: Commit and push if there are changes
       run: |
         git add .
         git commit -m "Updated CVSS-BT data $(date +%Y-%m-%d)" -a || exit 0
-        git tag -a "v$(date +%Y.%m.%d)" -m "Tagging for today's run"
-        git push origin "v$(date +%Y.%m.%d)"
-    
+        git tag -a "${{ steps.generate_tag.outputs.tag }}" -m "Tagging for today's run"
+        git push origin "${{ steps.generate_tag.outputs.tag }}"
+
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v$(date +%Y.%m.%d)
-        release_name: Release $(date +%Y.%m.%d)
+        tag_name: ${{ steps.generate_tag.outputs.tag }}
+        release_name: Release ${{ steps.generate_tag.outputs.tag }}
         draft: false
         prerelease: false
     
