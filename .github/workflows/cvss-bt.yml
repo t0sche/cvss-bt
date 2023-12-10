@@ -39,14 +39,14 @@ jobs:
     
     - name: Generate tag
       id: generate_tag
-      run: echo "tag=v$(date +%Y.%m.%d)" >> $GITHUB_OUTPUT
+      run: echo "tag=v$(date +%Y.%m.%d)" >> $GITHUB_ENV
 
     - name: Commit and push if there are changes
       run: |
         git add .
         git commit -m "Updated CVSS-BT data $(date +%Y-%m-%d)" -a || exit 0
-        git tag -a "${{ steps.generate_tag.outputs.tag }}" -m "Tagging for today's run"
-        git push origin "${{ steps.generate_tag.outputs.tag }}"
+        git tag -a "$tag" -m "Updated CVSS-BT data $(date +%Y-%m-%d)"
+        git push origin "$tag"
 
     - name: Create Release
       id: create_release
@@ -54,8 +54,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ steps.generate_tag.outputs.tag }}
-        release_name: Release ${{ steps.generate_tag.outputs.tag }}
+        tag_name: ${{ env.tag }}
+        release_name: Release ${{ env.tag }}
         draft: false
         prerelease: false
     
