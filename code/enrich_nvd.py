@@ -88,8 +88,8 @@ def update_temporal_score(df, epss_threshold):
 
     df.loc[condition_eh, 'exploit_maturity'] = 'E:H'
     df.loc[condition_ef, 'exploit_maturity'] = 'E:F'
-    df.loc[condition_ep & (df['cvss_version'] == '2.0'), 'exploit_maturity'] = 'E:POC'
-    df.loc[condition_ep & (df['cvss_version'] != '2.0'), 'exploit_maturity'] = 'E:P'
+    df.loc[condition_ep & (df['cvss_version'].astype(str) == '2.0'), 'exploit_maturity'] = 'E:POC'
+    df.loc[condition_ep & (df['cvss_version'].astype(str) != '2.0'), 'exploit_maturity'] = 'E:P'
 
     # Update vector with exploit maturity
     df['cvss-bt_vector'] = df['base_vector'] + '/' + df['exploit_maturity']
@@ -103,8 +103,7 @@ def update_temporal_score(df, epss_threshold):
             elif '2' in str(row['cvss_version']):
                 c = CVSS2(row['cvss-bt_vector'])
                 return c.temporal_score, str(c.severities()[1]).upper()
-            else:
-                return 'UNKNOWN', 'UNKNOWN'
+            return 'UNKNOWN', 'UNKNOWN'
         except Exception as e:
             print(f'Error occurred while computing CVSS: {e}')
             return 'UNKNOWN', 'UNKNOWN'
