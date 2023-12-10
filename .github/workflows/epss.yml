@@ -12,7 +12,7 @@ permissions:
     contents: write
 
 jobs:
-    update-epss:
+    check-epss:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code dir
