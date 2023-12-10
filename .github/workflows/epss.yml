@@ -3,6 +3,9 @@ name: Check for new EPSS data
 on:
     schedule:
       - cron: "0 11-16 * * *" # Every day from 11am to 4pm UTC, 7am to 12pm EST
+    push:
+      branches:
+        - dev
     workflow_dispatch:
 
 permissions:
@@ -12,17 +15,40 @@ jobs:
     update-epss:
         runs-on: ubuntu-latest
         steps:
-        - name: Check EPSS scores
-          run: |
-            TZ=America/New_York
-            today=$(date +%Y-%m-%d)
-            url="https://epss.cyentia.com/epss_scores-${today}.csv.gz"
-            echo $url
-            response=$(curl -s -o /dev/null -w "%{http_code}" "$url")
-            echo $response
-            if [ "$response" -eq 200 ]; then
-                echo "EPSS scores available for today"
-            else
-                echo "EPSS scores not available yet for today"
-                exit 1
-            fi
+            - name: Checkout code dir
+              uses: actions/checkout@v2
+              with:
+                path: 'code/'
+          
+            - name: Sparse Checkout last_run.txt
+              run: |
+                cd code
+                git sparse-checkout init --cone
+                git sparse-checkout set last_run.txt
+                git checkout
+            - name: Read and Compare Date in Last Run File
+              run: |
+                LAST_RUN_DATE=$(cut -d'T' -f1 last_run.txt)
+                CURRENT_DATE=$(date -u +"%Y-%m-%d")
+                echo "Last Run Date: $LAST_RUN_DATE"
+                echo "Current Date: $CURRENT_DATE"
+                if [[ "$LAST_RUN_DATE" == "$CURRENT_DATE" ]]; then
+                  echo "The enrichment has already run today. Exiting."
+                  exit 1
+                else
+                  echo "The enrichment has not run today. Proceeding with further steps."
+                fi
+            - name: Check for new EPSS scores
+              run: |
+                TZ=America/New_York
+                today=$(date +%Y-%m-%d)
+                url="https://epss.cyentia.com/epss_scores-${today}.csv.gz"
+                echo $url
+                response=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+                echo $response
+                if [ "$response" -eq 200 ]; then
+                  echo "EPSS scores available for today"
+                else
+                  echo "EPSS scores not available yet for today"
+                  exit 1
+                fi
