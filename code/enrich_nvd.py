@@ -1,7 +1,6 @@
 from urllib.request import urlopen
 import json
 import pandas as pd
-import numpy as np
 from cvss import CVSS3, CVSS2
 
 
