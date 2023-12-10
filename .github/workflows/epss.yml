@@ -17,17 +17,10 @@ jobs:
         steps:
             - name: Checkout code dir
               uses: actions/checkout@v2
-              with:
-                path: 'code/'
-          
-            - name: Sparse Checkout last_run.txt
-              run: |
-                git sparse-checkout init --cone
-                git sparse-checkout set last_run.txt
-                git checkout
+
             - name: Read and Compare Date in Last Run File
               run: |
-                LAST_RUN_DATE=$(cut -d'T' -f1 last_run.txt)
+                LAST_RUN_DATE=$(cut -d'T' -f1 code/last_run.txt)
                 CURRENT_DATE=$(date -u +"%Y-%m-%d")
                 echo "Last Run Date: $LAST_RUN_DATE"
                 echo "Current Date: $CURRENT_DATE"
@@ -37,6 +30,7 @@ jobs:
                 else
                   echo "The enrichment has not run today. Proceeding with further steps."
                 fi
+
             - name: Check for new EPSS scores
               run: |
                 TZ=America/New_York
