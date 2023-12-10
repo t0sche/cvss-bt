@@ -27,6 +27,8 @@ jobs:
         pip install -r code/requirements.txt
     
     - name: Run Enrichment Process
+      env:
+        NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
       run: |
         python -u code/process_nvd.py
 
