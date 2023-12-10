@@ -39,7 +39,7 @@ jobs:
     
     - name: Generate tag
       id: generate_tag
-      run: echo "::set-output name=tag::v$(date +%Y.%m.%d)"
+      run: echo "tag=v$(date +%Y.%m.%d)" >> $GITHUB_OUTPUT
 
     - name: Commit and push if there are changes
       run: |
