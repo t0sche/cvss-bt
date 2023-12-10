@@ -1,57 +1,47 @@
-name: Get EPSS Data
+name: Check for new EPSS data
 
 on:
     schedule:
-      - cron: "0 10-18 * * *" # Every day from 10am to 6pm UTC, 6am to 2pm EST
+      - cron: "0 11-16 * * *" # Every day from 11am to 4pm UTC, 7am to 12pm EST
+    push:
+      branches:
+        - dev
     workflow_dispatch:
 
 permissions:
     contents: write
 
 jobs:
-    update-epss:
+    check-epss:
         runs-on: ubuntu-latest
         steps:
-        - name: Check EPSS scores
-          run: |
-            TZ=America/New_York
-            today=$(date +%Y-%m-%d)
-            url="https://epss.cyentia.com/epss_scores-${today}.csv.gz"
-            echo $url
-            response=$(curl -s -o /dev/null -w "%{http_code}" "$url")
-            echo $response
-            if [ "$response" -eq 200 ]; then
-                echo "EPSS scores available for today"
-            else
-                echo "EPSS scores not available yet for today"
-                exit 1
-            fi
-        
-        - name: Checkout Repository
-          uses: actions/checkout@v2
-          with:
-            lfs: true
-        
-        - name: Checkout LFS objects
-          run: git lfs checkout
-        
-        - name: Download EPSS scores
-          run: |
-            mkdir -p data/epss
-            TZ=America/New_York
-            today=$(date +%Y-%m-%d)
-            url="https://epss.cyentia.com/epss_scores-${today}.csv.gz"
-            curl -o data/epss/epss_scores.csv.gz "$url"
-            gunzip -f data/epss/epss_scores.csv.gz
-            echo "EPSS scores downloaded successfully"
-        
-        - name: setup git config
-          run: |
-            git config user.name "GitHub Actions Bot"
-            git config user.email "<>"
-        
-        - name: Commit and Push Changes
-          run: |
-            git add .
-            git commit -m "Updated EPSS data $(date +%Y-%m-%d)"
-            git push
+            - name: Checkout code dir
+              uses: actions/checkout@v2
+
+            - name: Read and Compare Date in Last Run File
+              run: |
+                LAST_RUN_DATE=$(cut -d'T' -f1 code/last_run.txt)
+                CURRENT_DATE=$(date -u +"%Y-%m-%d")
+                echo "Last Run Date: $LAST_RUN_DATE"
+                echo "Current Date: $CURRENT_DATE"
+                if [[ "$LAST_RUN_DATE" == "$CURRENT_DATE" ]]; then
+                  echo "The enrichment has already run today. Exiting."
+                  exit 1
+                else
+                  echo "The enrichment has not run today. Proceeding with further steps."
+                fi
+
+            - name: Check for new EPSS scores
+              run: |
+                TZ=America/New_York
+                today=$(date +%Y-%m-%d)
+                url="https://epss.cyentia.com/epss_scores-${today}.csv.gz"
+                echo $url
+                response=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+                echo $response
+                if [ "$response" -eq 200 ]; then
+                  echo "EPSS scores available for today"
+                else
+                  echo "EPSS scores not available yet for today"
+                  exit 1
+                fi

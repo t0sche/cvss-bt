@@ -2,21 +2,20 @@ name: Run Enrichment Process
 
 on:
   workflow_run:
-    workflows: ["Update NVD Data"]
+    workflows: ["Check for new EPSS data"]
     types:
       - completed
   workflow_dispatch:
+
 permissions:
   contents: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-      with:
-        lfs: true
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -28,29 +27,35 @@ jobs:
         pip install -r code/requirements.txt
     
     - name: Run Enrichment Process
+      env:
+        NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
       run: |
-        python -u code/enrich_nvd.py
+        python -u code/process_nvd.py
 
     - name: setup git config
       run: |
         git config user.name "GitHub Actions Bot"
         git config user.email "<>"
     
+    - name: Generate tag
+      id: generate_tag
+      run: echo "tag=v$(date +%Y.%m.%d)" >> $GITHUB_ENV
+
     - name: Commit and push if there are changes
       run: |
         git add .
         git commit -m "Updated CVSS-BT data $(date +%Y-%m-%d)" -a || exit 0
-        git tag -a "v$(date +%Y.%m.%d)" -m "Tagging commits for publish workflow"
-        git push origin "v$(date +%Y.%m.%d)"
-    
+        git tag -a "$tag" -m "Updated CVSS-BT data $(date +%Y-%m-%d)"
+        git push origin "$tag"
+
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: ${{ env.tag }}
+        release_name: Release ${{ env.tag }}
         draft: false
         prerelease: false
     
