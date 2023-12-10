@@ -50,8 +50,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: v$(date +%Y.%m.%d)
+        release_name: Release $(date +%Y.%m.%d)
         draft: false
         prerelease: false
     
