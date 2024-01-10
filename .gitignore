@@ -1,3 +1,5 @@
 .venv
 .DS_Store
 .local
+.json
+.zip
