@@ -50,7 +50,7 @@ jobs:
 
     - name: Commit and push if there are changes
       run: |
-        git add .
+        git add cvss-bt.csv code/last_run.txt
         git commit -m "Updated CVSS-BT data $(date +%Y-%m-%d)" -a || exit 0
         git push origin HEAD:main
         git tag -a "$tag" -m "Updated CVSS-BT data $(date +%Y-%m-%d)"
