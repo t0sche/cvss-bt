@@ -1,0 +1,27 @@
+name: Grab NVD Data
+on:
+  workflow_run:
+      workflows: ["Check for new EPSS data"]
+      types:
+        - completed
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+        - name: Checkout repository
+          uses: actions/checkout@v2
+        - name: Set up Python
+          uses: actions/setup-python@v2
+          with:
+            python-version: '3.11'
+        - name: Grab Needed Data
+          run: |
+            rm -f *.zip
+            wget https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-{2002..2024}.json.zip 
+            unzip -o "*.zip" 

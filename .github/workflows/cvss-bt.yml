@@ -2,7 +2,7 @@ name: Run Enrichment Process
 
 on:
   workflow_run:
-    workflows: ["Check for new EPSS data"]
+    workflows: ["Grab NVD Data"]
     types:
       - completed
   workflow_dispatch:

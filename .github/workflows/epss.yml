@@ -2,7 +2,7 @@ name: Check for new EPSS data
 
 on:
     schedule:
-      - cron: "0 11-16 * * *" # Every day from 11am to 4pm UTC, 7am to 12pm EST
+      - cron: "0 11-15 * * *" # Every day from 11am to 4pm UTC, 7am to 11am EST
     push:
       branches:
         - dev
