@@ -54,7 +54,7 @@ def process_nvd_files():
     nvd_df = pd.DataFrame(nvd_accumulator)
     print('CVEs with CVSS scores from NVD:', nvd_df['cve'].nunique())
 
-    return nvd_df   
+    return nvd_df
 
 
 def enrich_df(nvd_df):
@@ -81,7 +81,8 @@ def enrich_df(nvd_df):
         'cisa_kev',
         'exploitdb',
         'metasploit',
-        'nuclei'
+        'nuclei',
+        'poc_github'
     ]
     cvss_bt_df = cvss_bt_df[columns]
     cvss_bt_df = cvss_bt_df.sort_values(by=['published_date'])

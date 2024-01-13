@@ -31,7 +31,8 @@ jobs:
       run: |
         rm -f *.zip
         wget https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-{2002..2024}.json.zip 
-        unzip -o "*.zip" 
+        unzip -o "*.zip"
+        rm -f *.zip
     
     - name: Run Enrichment Process
       env:

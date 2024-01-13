@@ -1,5 +1,6 @@
-from urllib.request import urlopen
+import requests
 import json
+import re
 import pandas as pd
 from cvss import CVSS3, CVSS2
 
@@ -9,6 +10,7 @@ METASPLOIT_JSON = 'https://raw.githubusercontent.com/rapid7/metasploit-framework
 NUCLEI_JSON = 'https://raw.githubusercontent.com/projectdiscovery/nuclei-templates/main/cves.json'
 EXPLOITDB_CSV = 'https://gitlab.com/exploit-database/exploitdb/-/raw/main/files_exploits.csv'
 KEV_JSON = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+POC_GITHUB = "https://raw.githubusercontent.com/nomi-sec/PoC-in-GitHub/master/README.md"
 
 EPSS_THRESHOLD = 0.36
 """
@@ -22,8 +24,8 @@ def enrich(df, epss_df):
     """
 
     #Load KEV Data
-    with urlopen(KEV_JSON) as response:
-        kev_json_data = json.loads(response.read())
+    response = requests.get(KEV_JSON)
+    kev_json_data = response.json()
     kev_cve_list = []
     for vuln in kev_json_data.get('vulnerabilities'):
         kev_cve_list.append(vuln.get('cveID'))
@@ -38,8 +40,8 @@ def enrich(df, epss_df):
     exploitdb_df['exploitdb'] = True
 
     #Load Metasploit
-    with urlopen(METASPLOIT_JSON) as response:
-        ms_json_data = json.loads(response.read())
+    response = requests.get(METASPLOIT_JSON)
+    ms_json_data = response.json()
     ms_cve_list = []
     for item in ms_json_data:
         if 'references' in ms_json_data[item]:
@@ -53,7 +55,11 @@ def enrich(df, epss_df):
     nuclei_df.rename(columns={"ID": "cve"}, inplace=True)
     nuclei_df = nuclei_df.drop(columns=['Info', 'file_path'])
     nuclei_df['nuclei'] = True
-    
+
+    #Load Poc-in-GitHub
+    poc_githib_df = pd.DataFrame(extract_cves_from_github(POC_GITHUB), columns=['cve'])
+    poc_githib_df['poc_github'] = True
+
     print('Mapping EPSS Data')
     df = pd.merge(df, epss_df, on='cve', how='left').fillna(False)
 
@@ -68,9 +74,26 @@ def enrich(df, epss_df):
 
     print('Mapping Nuclei Data')
     df = pd.merge(df, nuclei_df, on='cve', how='left').fillna(False)
-    
+
+    print('Mapping Poc-in-GitHub Data')
+    df = pd.merge(df, poc_githib_df, on='cve', how='left').fillna(False)
+
     df = df.drop_duplicates(subset='cve')
     return df
+
+
+def extract_cves_from_github(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        content = response.text
+    else:
+        content = ""
+        print("Failed to fetch README file")
+
+    cve_pattern = r"CVE-\d{4}-\d{4,7}"
+    cve_matches = re.findall(cve_pattern, content)
+    unique_cves = set(cve_matches)
+    return list(unique_cves)
 
 
 def update_temporal_score(df, epss_threshold):
@@ -84,7 +107,7 @@ def update_temporal_score(df, epss_threshold):
     # Next condition for 'E:F'
     condition_ef = (~condition_eh) & (df['nuclei'])
     # Last condition for 'E:P'
-    condition_ep = (~condition_eh) & (~condition_ef) & (df['exploitdb'])
+    condition_ep = (~condition_eh) & (~condition_ef) & (df['exploitdb'] | df['poc_github'])
 
     df.loc[condition_eh, 'exploit_maturity'] = 'E:H'
     df.loc[condition_ef, 'exploit_maturity'] = 'E:F'
@@ -110,6 +133,6 @@ def update_temporal_score(df, epss_threshold):
 
     # Extracting CVSS scores and severities
     print('Computing CVSS-BT scores and severities')
-    df[['cvss-bt_score', 'cvss-bt_severity']] = df.apply(compute_cvss, axis=1, result_type='expand') 
-    
+    df[['cvss-bt_score', 'cvss-bt_severity']] = df.apply(compute_cvss, axis=1, result_type='expand')
+
     return df
