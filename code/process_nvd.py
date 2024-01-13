@@ -27,6 +27,8 @@ def process_nvd_files():
                 for entry in vulnerabilities:
                     description = entry['cve']['description']['description_data'][0]['value']
                     cve = entry['cve']['CVE_data_meta']['ID']
+                    assigner = entry['cve']['CVE_data_meta']['ASSIGNER']
+                    published_date = entry['publishedDate']
                     if entry['impact'].get('baseMetricV3'):
                         cvss_version = entry['impact']['baseMetricV3']['cvssV3']['version']
                         base_score = entry['impact']['baseMetricV3']['cvssV3']['baseScore']
@@ -42,7 +44,9 @@ def process_nvd_files():
                         'cvss_version': cvss_version,
                         'base_score': base_score,
                         'base_severity': base_severity,
-                        'base_vector': base_vector
+                        'base_vector': base_vector,
+                        'assigner': assigner,
+                        'published_date': published_date
                     }
                     if not description.startswith('**'):
                         nvd_accumulator.append(new_row)
@@ -54,8 +58,10 @@ def process_nvd_files():
 
 
 def enrich_df(nvd_df):
-            
-    # Logic to enrich the data with exploit maturity and temporal scores.
+    """
+    Enriches the dataframe with exploit maturity and temporal scores.
+    """
+
     print('Enriching data')
     enriched_df = enrich_nvd.enrich(nvd_df, pd.read_csv(EPSS_CSV, comment='#', compression='gzip'))
     cvss_bt_df = enrich_nvd.update_temporal_score(enriched_df, enrich_nvd.EPSS_THRESHOLD)
@@ -69,6 +75,8 @@ def enrich_df(nvd_df):
         'base_score',
         'base_severity',
         'base_vector',
+        'assigner',
+        'published_date',
         'epss',
         'cisa_kev',
         'exploitdb',
@@ -76,6 +84,8 @@ def enrich_df(nvd_df):
         'nuclei'
     ]
     cvss_bt_df = cvss_bt_df[columns]
+    cvss_bt_df = cvss_bt_df.sort_values(by=['published_date'])
+    cvss_bt_df = cvss_bt_df.reset_index(drop=True)
     cvss_bt_df.to_csv('cvss-bt.csv', index=False, mode='w')
 
 
