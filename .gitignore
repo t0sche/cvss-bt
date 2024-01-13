@@ -3,3 +3,4 @@
 .local
 .json
 .zip
+code/__pycache__/
