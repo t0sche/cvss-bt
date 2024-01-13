@@ -44,7 +44,7 @@ This repository continuously enriches and publishes CVSS Temporal Scores based o
 
 ## CVSS Visual Mapping
 This data visualization provides a breakdown of how the CVSS-B, CVSS-BT and CVSS enriched temporal metrics map to the defined OSINT sources as of November 25th, 2023
-![CVSS-BT Mapping](https://github.com/patrickmgarrity/cvss-bt/blob/main/CVSS-BT-Enrichment.png)
+![CVSS-BT Mapping](CVSS-BT-Enrichment.png)
 
 ## To Do
 - CVSSv4 Threat Metrics
