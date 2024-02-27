@@ -1,7 +1,5 @@
 from datetime import datetime, date
-import time
 import os
-import requests
 import pandas as pd
 import enrich_nvd
 import json
