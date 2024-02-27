@@ -1,5 +1,5 @@
 import requests
-import json
+import os
 import re
 import pandas as pd
 from cvss import CVSS3, CVSS2
@@ -11,6 +11,8 @@ NUCLEI_JSON = 'https://raw.githubusercontent.com/projectdiscovery/nuclei-templat
 EXPLOITDB_CSV = 'https://gitlab.com/exploit-database/exploitdb/-/raw/main/files_exploits.csv'
 KEV_JSON = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
 POC_GITHUB = "https://raw.githubusercontent.com/nomi-sec/PoC-in-GitHub/master/README.md"
+VULNCHECK_KEV = 'https://api.vulncheck.com/v3/index/vulncheck-kev'
+VULNCHECK_API_KEY = os.environ.get('VULNCHECK_API_KEY')
 
 EPSS_THRESHOLD = 0.36
 """
@@ -31,6 +33,12 @@ def enrich(df, epss_df):
         kev_cve_list.append(vuln.get('cveID'))
     kev_df = pd.DataFrame(kev_cve_list, columns=['cve'])
     kev_df['cisa_kev'] = True
+    
+    #Load VulnCheck KEV
+    vulncheck_kev = get_vulncheck_data()
+    vulncheck_kev_df = pd.DataFrame(vulncheck_kev, columns=['cve'])
+    vulncheck_kev_df['cve'] = vulncheck_kev_df['cve'].apply(lambda x: ', '.join(map(str, x)))
+    vulncheck_kev_df['vulncheck_kev'] = True
 
     #Load ExploitDB
     exploitdb_df = pd.read_csv(EXPLOITDB_CSV, usecols=['codes']).rename(columns={"codes": "cve"})
@@ -96,6 +104,25 @@ def extract_cves_from_github(url):
     return list(unique_cves)
 
 
+def get_vulncheck_data():
+    data = []
+    headers = {
+      "accept": "application/json",
+      "authorization": f"Bearer {VULNCHECK_API_KEY}"
+    }
+    response = requests.get(VULNCHECK_KEV, headers=headers)
+    response = response.json()
+    current_page = response.get('_meta').get('page')
+    total_pages = response.get('_meta').get('total_pages')
+    data.extend(response.get('data'))
+    while current_page < total_pages:
+        current_page += 1
+        response = requests.get(f"{VULNCHECK_KEV}?page={current_page}", headers=headers)
+        response = response.json()
+        data.extend(response.get('data'))
+    return data
+
+
 def update_temporal_score(df, epss_threshold):
     """
     Update temporal score and severity based on exploit maturity
@@ -103,9 +130,9 @@ def update_temporal_score(df, epss_threshold):
     df['exploit_maturity'] = 'E:U'  # Default value
 
     # First condition for 'E:H'
-    condition_eh = (df['cisa_kev']) | (df['epss'] >= epss_threshold) | (df['metasploit'])
+    condition_eh = (df['cisa_kev']) | (df['epss'] >= epss_threshold) | (df['vulncheck_kev'])
     # Next condition for 'E:F'
-    condition_ef = (~condition_eh) & (df['nuclei'])
+    condition_ef = (~condition_eh) & ((df['nuclei']) | (df['metasploit']))
     # Last condition for 'E:P'
     condition_ep = (~condition_eh) & (~condition_ef) & (df['exploitdb'] | df['poc_github'])
 

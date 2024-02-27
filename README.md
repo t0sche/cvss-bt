@@ -16,7 +16,7 @@ Sources:
 
 | Value | Description | CVE Present In |
 |---------------------------|-------------|-------------|
-| High (H)                  | Functional autonomous code exists, or no exploit is required (manual trigger) and details are widely available. Exploit code works in every situation, or is actively being delivered via an autonomous agent (such as a worm or virus). Network-connected systems are likely to encounter scanning or exploitation attempts. Exploit development has reached the level of reliable, widely available, easy-to-use automated tools. | [CISA KEV](https://www.cisa.gov/known-exploited-vulnerabilities-catalog), [EPSS](https://www.first.org/epss/) > Threshold, [Metasploit](https://www.metasploit.com/) |
+| High (H)                  | Functional autonomous code exists, or no exploit is required (manual trigger) and details are widely available. Exploit code works in every situation, or is actively being delivered via an autonomous agent (such as a worm or virus). Network-connected systems are likely to encounter scanning or exploitation attempts. Exploit development has reached the level of reliable, widely available, easy-to-use automated tools. | [CISA KEV](https://www.cisa.gov/known-exploited-vulnerabilities-catalog), [VulnCheck KEV](https://vulncheck.com/kev), [EPSS](https://www.first.org/epss/) > Threshold, [Metasploit](https://www.metasploit.com/) |
 | Functional (F)            | Functional exploit code is available. The code works in most situations where the vulnerability exists. | [Nuclei](https://github.com/projectdiscovery/nuclei) |
 | Proof-of-Concept (P)      | Proof-of-concept exploit code is available. The code might not work in all situations. | [ExploitDB](https://www.exploit-db.com/), [PoC-in-GitHub](https://github.com/nomi-sec/PoC-in-GitHub) |
 | Unproven (U)              | No exploit code is available, or an exploit is theoretical. | CVE not present in any threat intelligence source above. |
@@ -27,6 +27,7 @@ Sources:
 This repository continuously enriches and publishes CVSS Temporal Scores based on the following threat intelligence:
 
 - CISA KEV
+- VulnCheck KEV
 - EPSS
 - Metasploit
 - Nuclei
@@ -52,6 +53,6 @@ This data visualization provides a breakdown of how the CVSS-B, CVSS-BT and CVSS
 
 ## Acknowledgements
 
-This product uses the NVD API but is not endorsed or certified by the NVD.
+This product uses VulnCheck KEV.
 
 This product uses EPSS scores but is not endoresed or certified by the EPSS SIG.
