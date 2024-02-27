@@ -73,6 +73,9 @@ def enrich(df, epss_df):
 
     print('Mapping KEV Data')
     df = pd.merge(df, kev_df, on='cve', how='left').fillna(False)
+    
+    print('Mapping VulnCheck KEV Data')
+    df = pd.merge(df, vulncheck_kev_df, on='cve', how='left').fillna(False)
 
     print('Mapping ExploitDB Data')
     df = pd.merge(df, exploitdb_df, on='cve', how='left').fillna(False)
