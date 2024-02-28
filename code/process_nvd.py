@@ -77,6 +77,7 @@ def enrich_df(nvd_df):
         'published_date',
         'epss',
         'cisa_kev',
+        'vulncheck_kev',
         'exploitdb',
         'metasploit',
         'nuclei',
