@@ -1,5 +1,5 @@
 from datetime import datetime, date
-import os
+from pathlib import Path
 import pandas as pd
 import enrich_nvd
 import json
@@ -16,38 +16,30 @@ def process_nvd_files():
         nvd_df: A dataframe containing the NVD data.
     """
     nvd_accumulator = []
-    for f in os.listdir():
-        if f.endswith('.json'):
-            print(f'Processing {f}')
-            with open(f'{f}', 'r', encoding='utf-8') as ff:
-                data = json.load(ff)
-                vulnerabilities = data.get('CVE_Items', {})
-                for entry in vulnerabilities:
-                    description = entry['cve']['description']['description_data'][0]['value']
-                    cve = entry['cve']['CVE_data_meta']['ID']
-                    assigner = entry['cve']['CVE_data_meta']['ASSIGNER']
-                    published_date = entry['publishedDate']
-                    if entry['impact'].get('baseMetricV3'):
-                        cvss_version = entry['impact']['baseMetricV3']['cvssV3']['version']
-                        base_score = entry['impact']['baseMetricV3']['cvssV3']['baseScore']
-                        base_severity = entry['impact']['baseMetricV3']['cvssV3']['baseSeverity']
-                        base_vector = entry['impact']['baseMetricV3']['cvssV3']['vectorString']
-                    elif entry['impact'].get('baseMetricV2'):
-                        cvss_version = entry['impact']['baseMetricV2']['cvssV2']['version']
-                        base_score = entry['impact']['baseMetricV2']['cvssV2']['baseScore']
-                        base_severity = entry['impact']['baseMetricV2']['severity']
-                        base_vector = entry['impact']['baseMetricV2']['cvssV2']['vectorString']
-                    new_row = {
-                        'cve': cve,
-                        'cvss_version': cvss_version,
-                        'base_score': base_score,
-                        'base_severity': base_severity,
-                        'base_vector': base_vector,
-                        'assigner': assigner,
-                        'published_date': published_date
-                    }
-                    if not description.startswith('**'):
-                        nvd_accumulator.append(new_row)
+
+    for file_path in Path('.').glob('*.json'):
+        print(f'Processing {file_path.name}')
+        with file_path.open('r', encoding='utf-8') as file:
+            data = json.load(file)
+            vulnerabilities = data.get('CVE_Items', [])
+
+            nvd_accumulator.extend([
+                {
+                    'cve': entry['cve']['CVE_data_meta']['ID'],
+                    'cvss_version': entry['impact']['baseMetricV3']['cvssV3']['version']
+                    if 'baseMetricV3' in entry['impact'] else entry['impact'].get('baseMetricV2', {}).get('cvssV2', {}).get('version', 'N/A'),
+                    'base_score': entry['impact']['baseMetricV3']['cvssV3']['baseScore']
+                    if 'baseMetricV3' in entry['impact'] else entry['impact'].get('baseMetricV2', {}).get('cvssV2', {}).get('baseScore', 'N/A'),
+                    'base_severity': entry['impact']['baseMetricV3']['cvssV3']['baseSeverity']
+                    if 'baseMetricV3' in entry['impact'] else entry['impact'].get('baseMetricV2', {}).get('cvssV2', {}).get('severity', 'N/A'),
+                    'base_vector': entry['impact']['baseMetricV3']['cvssV3']['vectorString']
+                    if 'baseMetricV3' in entry['impact'] else entry['impact'].get('baseMetricV2', {}).get('cvssV2', {}).get('vectorString', 'N/A'),
+                    'assigner': entry['cve']['CVE_data_meta']['ASSIGNER'],
+                    'published_date': entry['publishedDate'],
+                    'description': entry['cve']['description']['description_data'][0]['value']
+                }
+                for entry in vulnerabilities if not entry['cve']['description']['description_data'][0]['value'].startswith('**')
+            ])
 
     nvd_df = pd.DataFrame(nvd_accumulator)
     print('CVEs with CVSS scores from NVD:', nvd_df['cve'].nunique())
