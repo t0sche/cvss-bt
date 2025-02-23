@@ -1,3 +1,4 @@
 cvss
 pandas
 requests
+plotly
