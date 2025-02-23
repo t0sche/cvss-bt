@@ -1,7 +1,7 @@
 from datetime import datetime, date
 from pathlib import Path
 import pandas as pd
-import enrich_nvd, create_sankey
+import enrich_nvd
 import json
 
 EPSS_CSV = f'https://epss.cyentia.com/epss_scores-{date.today()}.csv.gz'
