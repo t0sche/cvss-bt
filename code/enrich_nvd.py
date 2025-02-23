@@ -2,7 +2,7 @@ import requests
 import os
 import re
 import pandas as pd
-from cvss import CVSS3, CVSS2
+import cvss
 
 
 EPSS_CSV = 'data/epss/epss_scores.csv'
@@ -69,27 +69,29 @@ def enrich(df, epss_df):
     poc_githib_df['poc_github'] = True
 
     print('Mapping EPSS Data')
-    df = pd.merge(df, epss_df, on='cve', how='left').fillna(False)
+    df = pd.merge(df, epss_df, on='cve', how='left')
 
     print('Mapping KEV Data')
-    df = pd.merge(df, kev_df, on='cve', how='left').fillna(False)
+    df = pd.merge(df, kev_df, on='cve', how='left')
     
     print('Mapping VulnCheck KEV Data')
-    df = pd.merge(df, vulncheck_kev_df, on='cve', how='left').fillna(False)
+    df = pd.merge(df, vulncheck_kev_df, on='cve', how='left')
 
     print('Mapping ExploitDB Data')
-    df = pd.merge(df, exploitdb_df, on='cve', how='left').fillna(False)
+    df = pd.merge(df, exploitdb_df, on='cve', how='left')
 
     print('Mapping Metasploit Data')
-    df = pd.merge(df, metasploit_df, on='cve', how='left').fillna(False)
+    df = pd.merge(df, metasploit_df, on='cve', how='left')
 
     print('Mapping Nuclei Data')
-    df = pd.merge(df, nuclei_df, on='cve', how='left').fillna(False)
+    df = pd.merge(df, nuclei_df, on='cve', how='left')
 
     print('Mapping Poc-in-GitHub Data')
-    df = pd.merge(df, poc_githib_df, on='cve', how='left').fillna(False)
+    df = pd.merge(df, poc_githib_df, on='cve', how='left')
 
     df = df.drop_duplicates(subset='cve')
+    # Fill NaN values with False
+    df.fillna(False, inplace=True)
     return df
 
 
@@ -132,6 +134,8 @@ def update_temporal_score(df, epss_threshold):
     """
     df['exploit_maturity'] = 'E:U'  # Default value
 
+    condition_ea = (df['cisa_kev']) | (df['epss'] >= epss_threshold) | (df['vulncheck_kev']) | (df['metasploit'])
+    condition_ep4 = (~condition_ea) & ((df['nuclei']) | (df['exploitdb'] | df['poc_github']))
     # First condition for 'E:H'
     condition_eh = (df['cisa_kev']) | (df['epss'] >= epss_threshold) | (df['vulncheck_kev'])
     # Next condition for 'E:F'
@@ -139,30 +143,41 @@ def update_temporal_score(df, epss_threshold):
     # Last condition for 'E:P'
     condition_ep = (~condition_eh) & (~condition_ef) & (df['exploitdb'] | df['poc_github'])
 
-    df.loc[condition_eh, 'exploit_maturity'] = 'E:H'
-    df.loc[condition_ef, 'exploit_maturity'] = 'E:F'
+    df.loc[condition_eh & (df['cvss_version'].astype(str) != '4.0'), 'exploit_maturity'] = 'E:H'
+    df.loc[condition_ea & (df['cvss_version'].astype(str) == '4.0'), 'exploit_maturity'] = 'E:A' #Updated to Attacked for 4.0
+    df.loc[condition_ef & (df['cvss_version'].astype(str) != '4.0'), 'exploit_maturity'] = 'E:F'
     df.loc[condition_ep & (df['cvss_version'].astype(str) == '2.0'), 'exploit_maturity'] = 'E:POC'
-    df.loc[condition_ep & (df['cvss_version'].astype(str) != '2.0'), 'exploit_maturity'] = 'E:P'
+    df.loc[condition_ep & (df['cvss_version'].astype(str) != '2.0') & (df['cvss_version'].astype(str) != '4.0'), 'exploit_maturity'] = 'E:P'
+    df.loc[condition_ep4 & (df['cvss_version'].astype(str) == '4.0'), 'exploit_maturity'] = 'E:P'
 
     # Update vector with exploit maturity
-    df['cvss-bt_vector'] = df['base_vector'] + '/' + df['exploit_maturity']
+    #Remove "E:X" from base vector if it exists
+    df['cvss-bt_vector'] = df.apply(lambda row: f"{row['base_vector']}/{row['exploit_maturity']}" if 'E:X' not in row['base_vector'] and row['base_vector'] != 'N/A' \
+                                                   else row['base_vector'].replace('/E:X', f"/{row['exploit_maturity']}") if row['base_vector'] != 'N/A' \
+                                                   else row['base_vector'], axis=1)
 
     # Apply CVSS computation
     def compute_cvss(row):
         try:
-            if '3' in str(row['cvss_version']):
-                c = CVSS3(row['cvss-bt_vector'])
+            if 'N/A' in str(row['cvss_version']):
+                return 'UNKNOWN', 'UNKNOWN'
+            elif '4' in str(row['cvss_version']):
+                c = cvss.CVSS4(row['cvss-bt_vector'])
+                return c.base_score, str(c.severity).upper()
+            elif '3' in str(row['cvss_version']):
+                c = cvss.CVSS3(row['cvss-bt_vector'])
                 return c.temporal_score, str(c.severities()[1]).upper()
             elif '2' in str(row['cvss_version']):
-                c = CVSS2(row['cvss-bt_vector'])
+                c = cvss.CVSS2(row['cvss-bt_vector'])
                 return c.temporal_score, str(c.severities()[1]).upper()
-            return 'UNKNOWN', 'UNKNOWN'
+            else:
+                raise ValueError(f"Unknown CVSS version: {row['cvss_version']}")
         except Exception as e:
             print(f'Error occurred while computing CVSS: {e}')
             return 'UNKNOWN', 'UNKNOWN'
 
     # Extracting CVSS scores and severities
     print('Computing CVSS-BT scores and severities')
-    df[['cvss-bt_score', 'cvss-bt_severity']] = df.apply(compute_cvss, axis=1, result_type='expand')
+    df[['cvss-bt_score', 'cvss-bt_severity']] = df.apply(compute_cvss, axis=1, result_type='expand') #Apply function to each row
 
     return df

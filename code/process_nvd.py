@@ -15,33 +15,51 @@ def process_nvd_files():
     Returns:
         nvd_df: A dataframe containing the NVD data.
     """
-    nvd_accumulator = []
+    nvd_dict = []
 
     for file_path in Path('.').glob('*.json'):
         print(f'Processing {file_path.name}')
         with file_path.open('r', encoding='utf-8') as file:
             data = json.load(file)
             vulnerabilities = data.get('CVE_Items', [])
+            print(f'CVEs in {file_path.name}:', len(vulnerabilities))
 
-            nvd_accumulator.extend([
-                {
-                    'cve': entry['cve']['CVE_data_meta']['ID'],
-                    'cvss_version': entry['impact']['baseMetricV3']['cvssV3']['version']
-                    if 'baseMetricV3' in entry['impact'] else entry['impact'].get('baseMetricV2', {}).get('cvssV2', {}).get('version', 'N/A'),
-                    'base_score': entry['impact']['baseMetricV3']['cvssV3']['baseScore']
-                    if 'baseMetricV3' in entry['impact'] else entry['impact'].get('baseMetricV2', {}).get('cvssV2', {}).get('baseScore', 'N/A'),
-                    'base_severity': entry['impact']['baseMetricV3']['cvssV3']['baseSeverity']
-                    if 'baseMetricV3' in entry['impact'] else entry['impact'].get('baseMetricV2', {}).get('cvssV2', {}).get('severity', 'N/A'),
-                    'base_vector': entry['impact']['baseMetricV3']['cvssV3']['vectorString']
-                    if 'baseMetricV3' in entry['impact'] else entry['impact'].get('baseMetricV2', {}).get('cvssV2', {}).get('vectorString', 'N/A'),
-                    'assigner': entry['cve']['CVE_data_meta']['ASSIGNER'],
-                    'published_date': entry['publishedDate'],
-                    'description': entry['cve']['description']['description_data'][0]['value']
-                }
-                for entry in vulnerabilities if not entry['cve']['description']['description_data'][0]['value'].startswith('**')
-            ])
+            for entry in vulnerabilities:
+                if not entry['cve']['description']['description_data'][0]['value'].startswith('**'):
+                    cve = entry['cve']['CVE_data_meta']['ID']
+                    if 'metricV40' in entry['impact']:
+                        cvss_version = '4.0'
+                        base_score = entry['impact']['metricV40']['baseScore']
+                        base_severity = entry['impact']['metricV40']['baseSeverity']
+                        base_vector = entry['impact']['metricV40']['vectorString']
+                    elif 'baseMetricV3' in entry['impact']:
+                        cvss_version = entry['impact']['baseMetricV3']['cvssV3']['version']
+                        base_score = entry['impact']['baseMetricV3']['cvssV3']['baseScore']
+                        base_severity = entry['impact']['baseMetricV3']['cvssV3']['baseSeverity']
+                        base_vector = entry['impact']['baseMetricV3']['cvssV3']['vectorString']
+                    else:
+                        cvss_version = entry['impact'].get('baseMetricV2', {}).get('cvssV2', {}).get('version', 'N/A')
+                        base_score = entry['impact'].get('baseMetricV2', {}).get('cvssV2', {}).get('baseScore', 'N/A')
+                        base_severity = entry['impact'].get('baseMetricV2', {}).get('severity', 'N/A')
+                        base_vector = entry['impact'].get('baseMetricV2', {}).get('cvssV2', {}).get('vectorString', 'N/A')
+                    assigner = entry['cve']['CVE_data_meta']['ASSIGNER']
+                    published_date = entry['publishedDate']
+                    description = entry['cve']['description']['description_data'][0]['value']
 
-    nvd_df = pd.DataFrame(nvd_accumulator)
+                    dict_entry = {
+                        'cve': cve,
+                        'cvss_version': cvss_version,
+                        'base_score': base_score,
+                        'base_severity': base_severity,
+                        'base_vector': base_vector,
+                        'assigner': assigner,
+                        'published_date': published_date,
+                        'description': description
+                    }
+                    nvd_dict.extend([dict_entry])
+
+
+    nvd_df = pd.DataFrame(nvd_dict)
     print('CVEs with CVSS scores from NVD:', nvd_df['cve'].nunique())
 
     return nvd_df
