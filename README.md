@@ -42,10 +42,103 @@ This repository continuously enriches and publishes CVSS Temporal Scores based o
 - Calculates the Exploit Code Maturity/Exploitability (E) Metric when new data is found.
 - Provides a resulting CVSS-BT score for each CVE
 
-## Caveats
-- In the event that the NVD calculated score is using a lesser version than a secondary source, I use the higher CVSS version.
-- The EPSS threshold for returning an `E:H` or `E:A` value is .36, or 36%. This is based on the F1 score of the model and the 37% threshold where most CVEs have weaponized exploit code.
-- I do not recommend using this percentage as a general threshold to prioritize on.
+## Custom Configuration
+
+This project now supports customizable risk thresholds and scoring to allow organizations to tailor vulnerability prioritization to their specific needs and risk tolerance.
+
+### Configuration Options
+
+Create a `config.yaml` file in the project root directory with the following options:
+
+```yaml
+# Thresholds for exploit maturity classification
+thresholds:
+  # EPSS score threshold (0.0 to 1.0) for high exploitability classification
+  epss: 0.36
+  
+# Weights for intelligence sources (0.0 to 1.0)
+# Higher weights give the source more influence on exploit maturity classification
+weights:
+  cisa_kev: 1.0
+  vulncheck_kev: 1.0
+  epss: 0.9
+  metasploit: 0.8
+  nuclei: 0.6
+  exploitdb: 0.4
+  poc_github: 0.3
+  
+# Scoring thresholds for exploit maturity classifications
+# These determine the weighted score needed to qualify for each maturity level
+scoring:
+  # Minimum weighted score to qualify as Attacked/High (E:A/E:H)
+  high_threshold: 0.8
+  # Minimum weighted score to qualify as Functional (E:F)
+  functional_threshold: 0.6
+  # Minimum weighted score to qualify as Proof-of-Concept (E:P)
+  poc_threshold: 0.3
+  
+# Enable/disable specific intelligence sources
+enabled_sources:
+  cisa_kev: true
+  vulncheck_kev: true
+  epss: true
+  metasploit: true
+  nuclei: true
+  exploitdb: true
+  poc_github: true
+```
+
+### How Customization Works
+
+The system uses a weighted scoring approach to determine the exploit maturity level:
+
+1. **Weighted Scoring**: Each intelligence source is assigned a weight between 0 and 1. When a vulnerability appears in a source, it accumulates the corresponding weight.
+
+2. **Normalized Score**: The total accumulated weight is normalized against the maximum possible score to produce a value between 0 and 1.
+
+3. **Maturity Classification**: The normalized score is compared against the thresholds defined in the `scoring` section to determine the appropriate exploit maturity level (E:A/E:H, E:F, or E:P).
+
+4. **CVSS Version Handling**: The system automatically assigns the correct temporal metric designation based on the CVSS version (E:A for CVSS v4.0, E:H for earlier versions, etc.).
+
+### Example Configurations
+
+#### High Security Posture
+```yaml
+thresholds:
+  epss: 0.20  # Lower threshold to be more conservative
+scoring:
+  high_threshold: 0.5  # Treat more vulnerabilities as high exploit maturity
+  functional_threshold: 0.3
+  poc_threshold: 0.1
+```
+
+#### Focused on Known Exploits
+```yaml
+weights:
+  cisa_kev: 1.0
+  vulncheck_kev: 1.0
+  metasploit: 1.0
+  epss: 0.5  # Less emphasis on prediction
+  nuclei: 0.4
+  exploitdb: 0.2
+  poc_github: 0.1
+```
+
+#### Disable Specific Sources
+```yaml
+enabled_sources:
+  cisa_kev: true
+  vulncheck_kev: true
+  epss: true
+  metasploit: true
+  nuclei: false  # Disable Nuclei
+  exploitdb: false  # Disable ExploitDB
+  poc_github: false  # Disable PoC-in-GitHub
+```
+
+### Output
+
+When using custom configuration, the system generates an additional file called `cvss-bt-config.json` that documents the configuration used for the analysis. The output CSV also includes a `weighted_score` column that shows the calculated score for each vulnerability, providing transparency in how the classifications were determined.
 
 ## CVSS Visual Mapping
 This data visualization provides a breakdown of how the CVSS-B, CVSS-BT and CVSS enriched temporal metrics map to the defined OSINT sources as of November 25th, 2023
