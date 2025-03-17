@@ -1,0 +1,38 @@
+# CVSS-BT Configuration File
+# Customize thresholds and weights for vulnerability prioritization
+
+# Thresholds for exploit maturity classification
+thresholds:
+  # EPSS score threshold (0.0 to 1.0) for high exploitability classification
+  epss: 0.36
+  
+# Weights for intelligence sources (0.0 to 1.0)
+# Higher weights give the source more influence on exploit maturity classification
+weights:
+  cisa_kev: 1.0
+  vulncheck_kev: 1.0
+  epss: 0.9
+  metasploit: 0.8
+  nuclei: 0.6
+  exploitdb: 0.4
+  poc_github: 0.3
+  
+# Scoring thresholds for exploit maturity classifications
+# These determine the weighted score needed to qualify for each maturity level
+scoring:
+  # Minimum weighted score to qualify as Attacked/High (E:A/E:H)
+  high_threshold: 0.8
+  # Minimum weighted score to qualify as Functional (E:F)
+  functional_threshold: 0.6
+  # Minimum weighted score to qualify as Proof-of-Concept (E:P)
+  poc_threshold: 0.3
+  
+# Enable/disable specific intelligence sources
+enabled_sources:
+  cisa_kev: true
+  vulncheck_kev: true
+  epss: true
+  metasploit: true
+  nuclei: true
+  exploitdb: true
+  poc_github: true
