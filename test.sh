@@ -1,7 +1,7 @@
 TZ=America/New_York
 today=$(date +%Y-%m-%d)
 year=$(date +%Y)
-url="https://epss.cyentia.com/epss_scores-${today}.csv.gz"
+url="https://epss.empiricalsecurity.com/epss_scores-${today}.csv.gz"
 echo $url
 response=$(curl -s -o /dev/null -w "%{http_code}" "$url")
 echo $response
