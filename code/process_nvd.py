@@ -4,7 +4,7 @@ import pandas as pd
 import enrich_nvd
 import json
 
-EPSS_CSV = f'https://epss.cyentia.com/epss_scores-{date.today()}.csv.gz'
+EPSS_CSV = f'https://epss.empiricalsecurity.com/epss_scores-{date.today()}.csv.gz'
 TIMESTAMP_FILE = './code/last_run.txt'
 
 
