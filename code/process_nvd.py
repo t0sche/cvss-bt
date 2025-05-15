@@ -20,8 +20,9 @@ def process_nvd_files():
     for file_path in Path('.').glob('*.json'):
         print(f'Processing {file_path.name}')
         with file_path.open('r', encoding='utf-8') as file:
-            data = json.load(file)
-            vulnerabilities = data.get('CVE_Items', [])
+            for line in file:
+                data = json.loads(line)
+                vulnerabilities = data.get('CVE_Items', [])
             print(f'CVEs in {file_path.name}:', len(vulnerabilities))
 
             for entry in vulnerabilities:
