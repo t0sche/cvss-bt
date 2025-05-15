@@ -42,6 +42,7 @@ jobs:
         rm -f *.zip
     
     - name: Run Enrichment Process
+      timeout-minutes: 60
       env:
         VULNCHECK_API_KEY: ${{ secrets.VULNCHECK_API_KEY }}
       run: |
