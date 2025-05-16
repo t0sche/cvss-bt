@@ -33,8 +33,7 @@ jobs:
 
             - name: Check for new EPSS scores
               run: |
-                TZ=America/New_York
-                today=$(date +%Y-%m-%d)
+                today=$(TZ=America/New_York date +%Y-%m-%d)
                 url="https://epss.empiricalsecurity.com/epss_scores-${today}.csv.gz"
                 echo $url
                 response=$(curl -s -o /dev/null -w "%{http_code}" "$url")

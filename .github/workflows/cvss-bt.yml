@@ -17,6 +17,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.workflow_run.head_branch }}
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -40,8 +42,29 @@ jobs:
         curl -L -o nvd.zip $url
         unzip -o "*.zip"
         rm -f *.zip
-    
+
+    - name: Combine and Split Files
+      run: |
+        # Combine all JSON files into one
+        jq -s '.' *.json > combined.json
+
+        # Split the combined file into smaller parts (e.g., 1000 CVEs per file)
+        split -l 1000 --additional-suffix=.json combined.json nvdcve-1.1-part
+
+        # Remove the combined file to save space
+        rm combined.json
+
+        # Rename the split files to replace the part number in the file name
+        for file in nvdcve-1.1-part*; do
+          part_number=$(echo "$file" | grep -oE '[0-9]+$')
+          mv "$file" "nvdcve-1.1-part${part_number}.json"
+        done
+
+        # Clean up any original JSON files
+        rm -f *.json
+
     - name: Run Enrichment Process
+      timeout-minutes: 60
       env:
         VULNCHECK_API_KEY: ${{ secrets.VULNCHECK_API_KEY }}
       run: |
@@ -51,10 +74,11 @@ jobs:
       run: |
         git config user.name "GitHub Actions Bot"
         git config user.email "<>"
-    
+
     - name: Generate tag
       id: generate_tag
-      run: echo "tag=v$(date +%Y.%m.%d)" >> $GITHUB_ENV
+      run: |
+        echo "::set-output name=tag::v$(date +%Y.%m.%d)"
 
     - name: Commit and push if there are changes
       run: |
@@ -70,11 +94,11 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ env.tag }}
-        release_name: Release ${{ env.tag }}
+        tag_name: ${{ steps.generate_tag.outputs.tag }}
+        release_name: "Release ${{ steps.generate_tag.outputs.tag }}"
         draft: false
         prerelease: false
-    
+
     - name: Upload Release Asset
       id: upload-release-asset 
       uses: actions/upload-release-asset@v1

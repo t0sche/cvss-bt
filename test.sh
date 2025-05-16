@@ -1,5 +1,4 @@
-TZ=America/New_York
-today=$(date +%Y-%m-%d)
+today=$(TZ=America/New_York date +%Y-%m-%d)
 year=$(date +%Y)
 url="https://epss.empiricalsecurity.com/epss_scores-${today}.csv.gz"
 echo $url

@@ -7,13 +7,9 @@ import json
 EPSS_CSV = f'https://epss.empiricalsecurity.com/epss_scores-{date.today()}.csv.gz'
 TIMESTAMP_FILE = './code/last_run.txt'
 
-
 def process_nvd_files():
     """
-    Processes the NVD JSON files and returns a dataframe.
-
-    Returns:
-        nvd_df: A dataframe containing the NVD data.
+    Processes the NVD JSON files incrementally using a streaming parser.
     """
     nvd_dict = []
 
