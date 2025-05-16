@@ -43,6 +43,26 @@ jobs:
         unzip -o "*.zip"
         rm -f *.zip
 
+    - name: Combine and Split Files
+      run: |
+        # Combine all JSON files into one
+        jq -s '.' *.json > combined.json
+
+        # Split the combined file into smaller parts (e.g., 1000 CVEs per file)
+        split -l 1000 --additional-suffix=.json combined.json nvdcve-1.1-part
+
+        # Remove the combined file to save space
+        rm combined.json
+
+        # Rename the split files to replace the part number in the file name
+        for file in nvdcve-1.1-part*; do
+          part_number=$(echo "$file" | grep -oE '[0-9]+$')
+          mv "$file" "nvdcve-1.1-part${part_number}.json"
+        done
+
+        # Clean up any original JSON files
+        rm -f *.json
+
     - name: Run Enrichment Process
       timeout-minutes: 60
       env:
