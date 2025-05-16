@@ -18,6 +18,7 @@ def process_nvd_files():
         with file_path.open('r', encoding='utf-8') as file:
             parser = ijson.items(file, 'CVE_Items.item')
             for entry in parser:
+                print(f'Processing {entry["cve"]["CVE_data_meta"]["ID"]}')
                 if not entry['cve']['description']['description_data'][0]['value'].startswith('**'):
                     cve = entry['cve']['CVE_data_meta']['ID']
                     if 'metricV40' in entry['impact']:
