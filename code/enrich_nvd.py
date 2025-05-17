@@ -115,16 +115,40 @@ def get_vulncheck_data():
       "accept": "application/json",
       "authorization": f"Bearer {VULNCHECK_API_KEY}"
     }
-    response = requests.get(VULNCHECK_KEV, headers=headers)
-    response = response.json()
-    current_page = response.get('_meta').get('page')
-    total_pages = response.get('_meta').get('total_pages')
-    data.extend(response.get('data'))
-    while current_page < total_pages:
-        current_page += 1
-        response = requests.get(f"{VULNCHECK_KEV}?page={current_page}", headers=headers)
-        response = response.json()
-        data.extend(response.get('data'))
+    try:
+        response = requests.get(VULNCHECK_KEV, headers=headers)
+        response.raise_for_status()  # Raise an exception for bad status codes
+        response_data = response.json()
+        
+        if not isinstance(response_data, dict):
+            raise ValueError("Invalid response format")
+            
+        meta = response_data.get('_meta')
+        if not meta:
+            raise ValueError("Missing _meta in response")
+            
+        current_page = meta.get('page', 1)
+        total_pages = meta.get('total_pages', 1)
+        
+        if isinstance(response_data.get('data'), list):
+            data.extend(response_data['data'])
+        
+        while current_page < total_pages:
+            current_page += 1
+            response = requests.get(f"{VULNCHECK_KEV}?page={current_page}", headers=headers)
+            response.raise_for_status()
+            response_data = response.json()
+            
+            if isinstance(response_data.get('data'), list):
+                data.extend(response_data['data'])
+                
+    except requests.RequestException as e:
+        print(f"Error fetching data from Vulncheck API: {e}")
+        return []
+    except ValueError as e:
+        print(f"Error processing Vulncheck response: {e}")
+        return []
+    
     return data
 
 
