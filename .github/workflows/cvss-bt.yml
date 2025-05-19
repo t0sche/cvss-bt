@@ -65,6 +65,7 @@ jobs:
         git add cvss-bt.csv code/last_run.txt
         git commit -m "Updated CVSS-BT data $(date +%Y-%m-%d)" -a || exit 0
         git push origin HEAD:main
+        tag="${{ steps.generate_tag.outputs.tag }}"
         git tag -a "$tag" -m "Updated CVSS-BT data $(date +%Y-%m-%d)"
         git push origin "$tag"
 
