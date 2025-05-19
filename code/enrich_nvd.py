@@ -173,7 +173,7 @@ def update_temporal_score(df, epss_threshold):
             else:
                 raise ValueError(f"Unknown CVSS version: {row['cvss_version']}")
         except Exception as e:
-            print(f'Error occurred while computing CVSS for {row['cve']}: {e}')
+            print(f"Error occurred while computing CVSS for {row['cve']}: {e}")
             return 'UNKNOWN', 'UNKNOWN'
 
     # Extracting CVSS scores and severities
