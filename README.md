@@ -1,5 +1,5 @@
 # cvss-bt
-Enriching the NVD CVSS scores to include Temporal/Threat Metrics
+This project enriches the NVD CVSS scores to include Temporal/Threat Metrics, and publishes a CSV file daily with the CVSS-BT scores and information sources.
 
 ## Overview
 
@@ -56,3 +56,9 @@ This data visualization provides a breakdown of how the CVSS-B, CVSS-BT and CVSS
 This product uses VulnCheck KEV.
 
 This product uses EPSS scores but is not endoresed or certified by the EPSS SIG.
+
+# Support this project
+If you'd like to financially support this project, feel free to donate below.
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/stephenshaffer)
+
