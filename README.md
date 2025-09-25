@@ -1,6 +1,26 @@
 # cvss-bt
 This project enriches the NVD CVSS scores to include Temporal/Threat Metrics, and publishes a CSV file daily with the CVSS-BT scores and information sources.
 
+## 🚀 Quick Start
+
+**New to CVSS-BT?** Get started quickly:
+
+```bash
+# Clone the repository
+git clone https://github.com/t0sche/cvss-bt.git
+cd cvss-bt
+
+# Run the automated setup
+./setup.sh
+
+# Verify installation
+python3 validate_setup.py
+```
+
+📖 **Read the full [Onboarding Guide](ONBOARDING.md)** for detailed setup and usage instructions.
+
+🤝 **Want to contribute?** Check out the [Contributing Guide](CONTRIBUTING.md).
+
 ## Overview
 
 The Common Vulnerability Scoring System (CVSS) is an industry standard for assessing the severity of computer system security vulnerabilities. CVSS attempts to establish a measure of how severe a vulnerability is based on its attributes.
