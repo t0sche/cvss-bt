@@ -3,7 +3,7 @@ This project enriches the NVD CVSS scores to include Temporal/Threat Metrics, an
 
 ## 🚀 Quick Start
 
-**New to CVSS-BT?** Get started quickly:
+**New to CVSS-BT?** Get started in under 5 minutes:
 
 ```bash
 # Clone the repository
@@ -17,7 +17,9 @@ cd cvss-bt
 python3 validate_setup.py
 ```
 
-📖 **Read the full [Onboarding Guide](ONBOARDING.md)** for detailed setup and usage instructions.
+📖 **Read the [Quick Start Guide](QUICKSTART.md)** for instant usage examples.
+
+📚 **Read the full [Onboarding Guide](ONBOARDING.md)** for detailed setup and usage instructions.
 
 🤝 **Want to contribute?** Check out the [Contributing Guide](CONTRIBUTING.md).
 
