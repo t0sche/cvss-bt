@@ -48,8 +48,15 @@ This repository continuously enriches and publishes CVSS Temporal Scores based o
 - I do not recommend using this percentage as a general threshold to prioritize on.
 
 ## CVSS Visual Mapping
-This data visualization provides a breakdown of how the CVSS-B, CVSS-BT and CVSS enriched temporal metrics map to the defined OSINT sources as of November 25th, 2023
+This data visualization provides a breakdown of how the CVSS-B, CVSS-BT and CVSS enriched temporal metrics map to the defined OSINT sources. The diagram is automatically updated whenever new CVSS-BT data is published.
+
 ![CVSS-BT Mapping](CVSS-BT-Enrichment.png)
+
+To view an interactive version of the diagram, run:
+```bash
+python code/generate_sankey.py
+```
+This will generate `CVSS-BT-Enrichment.html` which you can open in your browser.
 
 ## Acknowledgements
 

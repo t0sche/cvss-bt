@@ -4,3 +4,4 @@
 *.json
 *.zip
 code/__pycache__/
+CVSS-BT-Enrichment.html

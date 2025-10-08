@@ -2,3 +2,5 @@ cvss
 pandas
 requests
 ijson
+plotly
+kaleido
