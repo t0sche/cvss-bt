@@ -34,7 +34,7 @@ df['exploit_category'] = df.apply(map_exploit_maturity, axis=1)
 def get_base_severity_range(score):
     """Categorize base scores into ranges"""
     if pd.isna(score):
-        return 'Unknown'
+        return None
     score = float(score)
     if score == 10:
         return '10'
@@ -65,11 +65,11 @@ df['base_range'] = df['base_score'].apply(get_base_severity_range)
 def get_temporal_severity_range(score):
     """Categorize temporal scores into ranges"""
     if pd.isna(score) or score == 'UNKNOWN':
-        return 'Unknown'
+        return None
     try:
         score = float(score)
     except:
-        return 'Unknown'
+        return None
     
     if score == 10:
         return '10'
@@ -96,6 +96,9 @@ def get_temporal_severity_range(score):
 
 df['temporal_range'] = df['cvss-bt_score'].apply(get_temporal_severity_range)
 
+# Remove rows with None values
+df = df[df['base_range'].notna() & df['temporal_range'].notna()]
+
 # Create flows from base score to temporal score
 base_to_temporal = df.groupby(['base_range', 'temporal_range']).size().reset_index(name='count')
 
@@ -106,23 +109,25 @@ temporal_to_exploit = df.groupby(['temporal_range', 'exploit_category']).size().
 labels = []
 label_to_idx = {}
 
-# Add base score labels
-base_ranges = ['0-1.9', '1-1.9', '2-2.9', '3-3.9', '4-4.9', '5-5.9', '6-6.9', '7-7.9', '8-8.9', '9-9.9', '10']
+# Add base score labels (ordered from high to low)
+base_ranges = ['10', '9-9.9', '8-8.9', '7-7.9', '6-6.9', '5-5.9', '4-4.9', '3-3.9', '2-2.9', '1-1.9', '0-1.9']
 for br in base_ranges:
     if br in base_to_temporal['base_range'].values:
-        label = f"{br} ({df[df['base_range'] == br].shape[0]:,})"
+        count = df[df['base_range'] == br].shape[0]
+        label = f"{br} ({count:,})"
         labels.append(label)
         label_to_idx[('base', br)] = len(labels) - 1
 
-# Add temporal score labels
-temporal_ranges = ['0-1.9', '1-1.9', '2-2.9', '3-3.9', '4-4.9', '5-5.9', '6-6.9', '7-7.9', '8-8.9', '9-9.9', '10']
+# Add temporal score labels (ordered from high to low)
+temporal_ranges = ['10', '9-9.9', '8-8.9', '7-7.9', '6-6.9', '5-5.9', '4-4.9', '3-3.9', '2-2.9', '1-1.9', '0-1.9']
 for tr in temporal_ranges:
     if tr in temporal_to_exploit['temporal_range'].values:
-        label = f"{tr} ({df[df['temporal_range'] == tr].shape[0]:,})"
+        count = df[df['temporal_range'] == tr].shape[0]
+        label = f"{tr} ({count:,})"
         labels.append(label)
         label_to_idx[('temporal', tr)] = len(labels) - 1
 
-# Add exploit category labels
+# Add exploit category labels (ordered from high to low severity)
 exploit_categories = ['High', 'Functional', 'Proof-of-Concept', 'Unproven']
 for ec in exploit_categories:
     count = df[df['exploit_category'] == ec].shape[0]
@@ -150,33 +155,37 @@ for _, row in temporal_to_exploit.iterrows():
         values.append(row['count'])
 
 # Define colors for the nodes based on severity
-colors = []
+# Colors match the reference image: red for critical, orange for high, yellow for medium, green for low
+node_colors = []
 for label in labels:
-    if 'High' in label and '(' in label:
-        colors.append('rgba(255, 0, 0, 0.8)')  # Red for High
+    if 'High (' in label and 'High (' == label.split('(')[0][:6]:  # Exploit category High
+        node_colors.append('rgba(255, 99, 71, 0.8)')  # Red
     elif 'Functional' in label:
-        colors.append('rgba(255, 165, 0, 0.8)')  # Orange for Functional
+        node_colors.append('rgba(255, 165, 0, 0.8)')  # Orange
     elif 'Proof-of-Concept' in label:
-        colors.append('rgba(255, 255, 0, 0.8)')  # Yellow for Proof-of-Concept
+        node_colors.append('rgba(255, 255, 102, 0.8)')  # Yellow
     elif 'Unproven' in label:
-        colors.append('rgba(144, 238, 144, 0.8)')  # Light green for Unproven
-    elif label.startswith('10 ') or label.startswith('9-9.9'):
-        colors.append('rgba(255, 0, 0, 0.6)')  # Red for critical
+        node_colors.append('rgba(144, 238, 144, 0.8)')  # Light green
+    elif label.startswith('10 (') or label.startswith('9-9.9'):
+        node_colors.append('rgba(220, 53, 69, 0.7)')  # Red
     elif label.startswith('8-8.9') or label.startswith('7-7.9'):
-        colors.append('rgba(255, 165, 0, 0.6)')  # Orange for high
+        node_colors.append('rgba(253, 126, 20, 0.7)')  # Orange
     elif label.startswith('6-6.9') or label.startswith('5-5.9'):
-        colors.append('rgba(255, 255, 0, 0.6)')  # Yellow for medium
+        node_colors.append('rgba(255, 193, 7, 0.7)')  # Yellow
+    elif label.startswith('4-4.9') or label.startswith('3-3.9'):
+        node_colors.append('rgba(144, 238, 144, 0.7)')  # Light green
     else:
-        colors.append('rgba(144, 238, 144, 0.6)')  # Green for low
+        node_colors.append('rgba(144, 238, 144, 0.7)')  # Light green for low scores
 
 # Create the Sankey diagram
 fig = go.Figure(data=[go.Sankey(
+    arrangement='snap',
     node=dict(
         pad=15,
         thickness=20,
         line=dict(color='black', width=0.5),
         label=labels,
-        color=colors
+        color=node_colors
     ),
     link=dict(
         source=sources,
@@ -188,67 +197,71 @@ fig = go.Figure(data=[go.Sankey(
 # Update layout
 fig.update_layout(
     title={
-        'text': f"CVSS Scoring Threat Enrichment<br><sub>https://github.com/t0sche/cvss-bt</sub><br><sub>Generated: {datetime.now().strftime('%Y-%m-%d')}</sub>",
+        'text': f"CVSS Scoring Threat Enrichment<br><sub>https://github.com/t0sche/cvss-bt</sub>",
         'x': 0.5,
         'xanchor': 'center',
-        'font': {'size': 24}
+        'font': {'size': 28, 'family': 'Arial Black'}
     },
-    font=dict(size=12),
-    height=800,
-    width=1400
+    font=dict(size=12, family='Arial'),
+    height=900,
+    width=1600,
+    margin=dict(l=10, r=10, t=120, b=100)
 )
 
 # Add annotations for the three columns
 fig.add_annotation(
     text="CVSS Base Score",
     xref="paper", yref="paper",
-    x=0.05, y=1.05,
+    x=0.05, y=1.08,
     showarrow=False,
-    font=dict(size=18, family="Arial Black")
+    font=dict(size=20, family="Arial Black")
 )
 
 fig.add_annotation(
     text="CVSS Temporal Score",
     xref="paper", yref="paper",
-    x=0.5, y=1.05,
+    x=0.5, y=1.08,
     showarrow=False,
-    font=dict(size=18, family="Arial Black")
+    font=dict(size=20, family="Arial Black")
 )
 
 fig.add_annotation(
     text="Exploit Availability",
     xref="paper", yref="paper",
-    x=0.95, y=1.05,
+    x=0.95, y=1.08,
     showarrow=False,
-    font=dict(size=18, family="Arial Black")
+    font=dict(size=20, family="Arial Black")
 )
 
-# Add legend information
+# Add legend information at the bottom
 legend_text = (
-    "<b>High</b> = CISA KEV, MetaSploit Module, EPSS> .36<br>"
-    "<b>Functional</b> = Nuclei<br>"
-    "<b>Proof-of-Concept</b> = ExploitDB<br>"
-    "<b>Unproven</b> = None of the Above"
+    f"<b>High</b> = CISA KEV, MetaSploit Module, EPSS> .36<br>"
+    f"<b>Functional</b> = Nuclei<br>"
+    f"<b>Proof-of-Concept</b> = ExploitDB<br>"
+    f"<b>Unproven</b> = None of the Above"
 )
 
 fig.add_annotation(
     text=legend_text,
     xref="paper", yref="paper",
-    x=0.98, y=0.02,
+    x=0.99, y=-0.05,
     xanchor='right',
+    yanchor='top',
     showarrow=False,
-    font=dict(size=11),
+    font=dict(size=12, family='Arial'),
     align='left',
-    bgcolor='rgba(255, 255, 255, 0.8)',
+    bgcolor='rgba(255, 255, 255, 0.9)',
     bordercolor='black',
-    borderwidth=1
+    borderwidth=1,
+    borderpad=8
 )
 
 # Save the figure
 print("Generating Sankey diagram...")
-fig.write_image('CVSS-BT-Enrichment.png', width=1400, height=800, scale=2)
+fig.write_image('CVSS-BT-Enrichment.png', width=1600, height=900, scale=2)
 print("Sankey diagram saved as CVSS-BT-Enrichment.png")
 
 # Also save as HTML for interactive viewing
 fig.write_html('CVSS-BT-Enrichment.html')
 print("Interactive version saved as CVSS-BT-Enrichment.html")
+
