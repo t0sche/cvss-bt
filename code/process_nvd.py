@@ -2,29 +2,22 @@ from datetime import datetime, date
 from pathlib import Path
 import pandas as pd
 import enrich_nvd
-import json
+import ijson
 
-EPSS_CSV = f'https://epss.cyentia.com/epss_scores-{date.today()}.csv.gz'
+EPSS_CSV = f'https://epss.empiricalsecurity.com/epss_scores-{date.today()}.csv.gz'
 TIMESTAMP_FILE = './code/last_run.txt'
-
 
 def process_nvd_files():
     """
-    Processes the NVD JSON files and returns a dataframe.
-
-    Returns:
-        nvd_df: A dataframe containing the NVD data.
+    Processes the NVD JSON files incrementally using a streaming parser (ijson).
     """
     nvd_dict = []
 
     for file_path in Path('.').glob('*.json'):
         print(f'Processing {file_path.name}')
         with file_path.open('r', encoding='utf-8') as file:
-            data = json.load(file)
-            vulnerabilities = data.get('CVE_Items', [])
-            print(f'CVEs in {file_path.name}:', len(vulnerabilities))
-
-            for entry in vulnerabilities:
+            # Stream over each item in the CVE_Items array
+            for entry in ijson.items(file, 'CVE_Items.item'):
                 if not entry['cve']['description']['description_data'][0]['value'].startswith('**'):
                     cve = entry['cve']['CVE_data_meta']['ID']
                     if 'metricV40' in entry['impact']:
@@ -56,12 +49,10 @@ def process_nvd_files():
                         'published_date': published_date,
                         'description': description
                     }
-                    nvd_dict.extend([dict_entry])
-
+                    nvd_dict.append(dict_entry)
 
     nvd_df = pd.DataFrame(nvd_dict)
     print('CVEs with CVSS scores from NVD:', nvd_df['cve'].nunique())
-
     return nvd_df
 
 

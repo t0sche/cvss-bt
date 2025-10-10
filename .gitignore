@@ -1,6 +1,7 @@
 .venv
 .DS_Store
 .local
-.json
-.zip
+*.json
+*.zip
 code/__pycache__/
+CVSS-BT-Enrichment.html

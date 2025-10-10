@@ -1,5 +1,5 @@
 # cvss-bt
-Enriching the NVD CVSS scores to include Temporal/Threat Metrics
+This project enriches the NVD CVSS scores to include Temporal/Threat Metrics, and publishes a CSV file daily with the CVSS-BT scores and information sources.
 
 ## Overview
 
@@ -48,11 +48,24 @@ This repository continuously enriches and publishes CVSS Temporal Scores based o
 - I do not recommend using this percentage as a general threshold to prioritize on.
 
 ## CVSS Visual Mapping
-This data visualization provides a breakdown of how the CVSS-B, CVSS-BT and CVSS enriched temporal metrics map to the defined OSINT sources as of November 25th, 2023
+This data visualization provides a breakdown of how the CVSS-B, CVSS-BT and CVSS enriched temporal metrics map to the defined OSINT sources. The diagram is automatically updated whenever new CVSS-BT data is published.
+
 ![CVSS-BT Mapping](CVSS-BT-Enrichment.png)
+
+To view an interactive version of the diagram, run:
+```bash
+python code/generate_sankey.py
+```
+This will generate `CVSS-BT-Enrichment.html` which you can open in your browser.
 
 ## Acknowledgements
 
 This product uses VulnCheck KEV.
 
 This product uses EPSS scores but is not endoresed or certified by the EPSS SIG.
+
+# Support this project
+If you'd like to financially support this project, feel free to donate below.
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/stephenshaffer)
+
