@@ -3,4 +3,8 @@
 .local
 *.json
 *.zip
-code/__pycache__/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python

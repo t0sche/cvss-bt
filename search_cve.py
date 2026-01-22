@@ -13,8 +13,27 @@ Usage:
 
 import argparse
 import csv
+import re
 import sys
 from pathlib import Path
+
+
+# Constants
+MAX_VECTOR_DISPLAY_LENGTH = 80
+CVE_PATTERN = re.compile(r'^CVE-\d{4}-\d{4,}$', re.IGNORECASE)
+
+
+def validate_cve_id(cve_id):
+    """
+    Validate CVE ID format.
+    
+    Args:
+        cve_id: CVE ID string to validate
+        
+    Returns:
+        True if valid, False otherwise
+    """
+    return CVE_PATTERN.match(cve_id.strip()) is not None
 
 
 def search_cves(csv_file, cve_ids, verbose=False):
@@ -29,7 +48,18 @@ def search_cves(csv_file, cve_ids, verbose=False):
     Returns:
         Dictionary mapping CVE IDs to their data (or None if not found)
     """
-    # Normalize CVE IDs to uppercase
+    # Validate and normalize CVE IDs
+    invalid_cves = []
+    for cve in cve_ids:
+        if not validate_cve_id(cve):
+            invalid_cves.append(cve)
+    
+    if invalid_cves:
+        print(f"Warning: Invalid CVE ID format(s) detected:", file=sys.stderr)
+        for cve in invalid_cves:
+            print(f"  - {cve} (expected format: CVE-YYYY-NNNNN)", file=sys.stderr)
+        print(file=sys.stderr)
+    
     normalized_cves = {cve.upper(): cve for cve in cve_ids}
     results = {}
     
@@ -78,7 +108,10 @@ def display_results(cve_ids, results, verbose=False):
                 print(f"  Metasploit:       {data.get('metasploit', 'N/A')}")
                 print(f"  Nuclei:           {data.get('nuclei', 'N/A')}")
                 print(f"  PoC GitHub:       {data.get('poc_github', 'N/A')}")
-                print(f"  Vector:           {data.get('cvss-bt_vector', 'N/A')[:80]}")
+                vector = data.get('cvss-bt_vector', 'N/A')
+                if len(vector) > MAX_VECTOR_DISPLAY_LENGTH:
+                    vector = vector[:MAX_VECTOR_DISPLAY_LENGTH] + "..."
+                print(f"  Vector:           {vector}")
             else:
                 print(f"  Score: {data.get('cvss-bt_score', 'N/A')} ({data.get('cvss-bt_severity', 'N/A')})")
                 print(f"  Published: {data.get('published_date', 'N/A')}")
