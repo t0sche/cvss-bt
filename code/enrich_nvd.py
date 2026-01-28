@@ -90,8 +90,10 @@ def enrich(df, epss_df):
     df = pd.merge(df, poc_githib_df, on='cve', how='left')
 
     df = df.drop_duplicates(subset='cve')
-    # Fill NaN values with False
-    df.fillna(False, inplace=True)
+    # Fill NaN values appropriately for each column type
+    bool_columns = ['cisa_kev', 'vulncheck_kev', 'exploitdb', 'metasploit', 'nuclei', 'poc_github']
+    df[bool_columns] = df[bool_columns].fillna(False)
+    df['epss'] = df['epss'].fillna(0.0)
     return df
 
 
