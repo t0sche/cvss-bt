@@ -2,3 +2,4 @@ cvss
 pandas
 requests
 ijson
+pyarrow
