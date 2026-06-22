@@ -130,6 +130,53 @@ def get_vulncheck_data():
     return data
 
 
+def _candidate_sources(exploit_maturity, cvss_version):
+    """
+    Return the threat-intelligence sources that are eligible to drive a given
+    Exploit Maturity (E) value, ordered for stable output.
+
+    This mirrors the conditions in update_temporal_score exactly so that the
+    provenance string only ever lists sources that actually contributed to the
+    assigned E value (e.g. Metasploit drives E:A on 4.0 but not E:H on 3.x).
+    """
+    is_v4 = str(cvss_version) == '4.0'
+    if exploit_maturity in ('E:H', 'E:A'):
+        # E:H (3.x/2.0) and E:A (4.0) share the same KEV/EPSS triggers;
+        # 4.0 additionally escalates to "Attacked" on Metasploit.
+        sources = ['cisa_kev', 'vulncheck_kev', 'epss']
+        if is_v4:
+            sources.append('metasploit')
+        return sources
+    if exploit_maturity == 'E:F':
+        return ['metasploit', 'nuclei']
+    if exploit_maturity in ('E:P', 'E:POC'):
+        # 4.0 folds Nuclei into Proof-of-Concept; 3.x/2.0 treat Nuclei as E:F.
+        sources = ['exploitdb', 'poc_github']
+        if is_v4:
+            sources.insert(0, 'nuclei')
+        return sources
+    return []  # E:U or any value with no driving source
+
+
+def get_exploit_maturity_source(row, epss_threshold):
+    """
+    Build a pipe-delimited provenance string listing the source columns that
+    triggered this row's assigned Exploit Maturity value (e.g. 'cisa_kev|metasploit').
+
+    EPSS contributes as 'epss' only when its score meets the threshold. E:U rows
+    have no driving source and yield an empty string.
+    """
+    candidates = _candidate_sources(row['exploit_maturity'], row['cvss_version'])
+    triggered = []
+    for source in candidates:
+        if source == 'epss':
+            if row['epss'] >= epss_threshold:
+                triggered.append('epss')
+        elif bool(row[source]):
+            triggered.append(source)
+    return '|'.join(triggered)
+
+
 def update_temporal_score(df, epss_threshold):
     """
     Update temporal score and severity based on exploit maturity
@@ -151,6 +198,10 @@ def update_temporal_score(df, epss_threshold):
     df.loc[condition_ep & (df['cvss_version'].astype(str) == '2.0'), 'exploit_maturity'] = 'E:POC'
     df.loc[condition_ep & (df['cvss_version'].astype(str) != '2.0') & (df['cvss_version'].astype(str) != '4.0'), 'exploit_maturity'] = 'E:P'
     df.loc[condition_ep4 & (df['cvss_version'].astype(str) == '4.0'), 'exploit_maturity'] = 'E:P'
+
+    # Record which source(s) drove the assigned exploit maturity (provenance)
+    df['exploit_maturity_source'] = df.apply(
+        lambda row: get_exploit_maturity_source(row, epss_threshold), axis=1)
 
     # Update vector with exploit maturity
     # Replace "E:" from base vector if it exists
