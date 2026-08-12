@@ -82,7 +82,8 @@ def enrich_df(nvd_df):
         'exploitdb',
         'metasploit',
         'nuclei',
-        'poc_github'
+        'poc_github',
+        'exploit_maturity_source'
     ]
     cvss_bt_df = cvss_bt_df[columns]
     cvss_bt_df = cvss_bt_df.sort_values(by=['published_date'])
