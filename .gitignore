@@ -3,4 +3,5 @@
 .local
 *.json
 *.zip
+*.parquet
 code/__pycache__/
