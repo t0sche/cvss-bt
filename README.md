@@ -24,6 +24,18 @@ Sources:
 | Unproven (U) (v4.0/3.1/3.0/2.0) | No exploit code is available, or an exploit is theoretical. | CVE not present in any threat intelligence source above. |
 | Not Defined (X) (v4.0/3.1/3.0/2.0) | Assigning this value to the metric will not influence the score. It means the user does not have enough information to assign a score. | We drop this value since we have information to assign a score. |
 
+#### `exploit_maturity_source` column
+
+The published CSV includes an `exploit_maturity_source` column recording **which threat-intelligence source(s) actually drove** each CVE's assigned Exploit Maturity (`E`) value (e.g. `cisa_kev|epss`). It is a `|`-separated list, appended as a trailing column (existing column order is unchanged), and is empty only for `E:U` rows.
+
+Because the sources are listed in **assignment precedence** order, attribution reflects the value a source can actually drive — not merely that the source flagged the CVE:
+
+- **`E:H`** (v3.1/3.0/2.0) / **`E:A`** (v4.0): `cisa_kev`, `vulncheck_kev`, `epss` (≥ threshold); `metasploit` contributes to `E:A` on v4.0 only.
+- **`E:F`** (v3.1/3.0/2.0): `metasploit`, `nuclei`.
+- **`E:P`/`E:POC`**: `exploitdb`, `poc_github`; `nuclei` contributes to `E:P` on v4.0 only.
+
+So a CVE in both CISA KEV and Metasploit scored `E:H` on v3.1 is attributed to `cisa_kev` (and `vulncheck_kev`/`epss` if applicable) but **not** `metasploit`, since Metasploit does not drive `E:H` on v3.x.
+
 
 ## Features
 This repository continuously enriches and publishes CVSS Temporal Scores based on the following threat intelligence:
