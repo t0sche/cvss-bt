@@ -47,6 +47,34 @@ This repository continuously enriches and publishes CVSS Temporal Scores based o
 - The EPSS threshold for returning an `E:H` or `E:A` value is .36, or 36%. This is based on the F1 score of the model and the 37% threshold where most CVEs have weaponized exploit code.
 - I do not recommend using this percentage as a general threshold to prioritize on.
 
+## Accessing the Data
+
+The CVSS-BT dataset contains over 328,000 CVEs with enriched temporal scores and is available in both CSV and Parquet formats.
+
+### Download from Releases
+
+Download the latest data files from the [Releases page](https://github.com/t0sche/cvss-bt/releases/latest):
+- **cvss-bt.csv** - Full dataset in CSV format (~70 MB)
+- **cvss-bt.parquet** - Full dataset in Parquet format (smaller, more efficient)
+
+You can also download programmatically:
+```bash
+# Download CSV
+curl -L -o cvss-bt.csv https://github.com/t0sche/cvss-bt/releases/latest/download/cvss-bt.csv
+
+# Download Parquet
+curl -L -o cvss-bt.parquet https://github.com/t0sche/cvss-bt/releases/latest/download/cvss-bt.parquet
+```
+
+### Clone the Repository
+
+Clone this repository to access the latest CSV file:
+```bash
+git clone https://github.com/t0sche/cvss-bt.git
+```
+
+**Note:** The CSV file is large and will not render on GitHub's web interface. Download the file or clone the repository to view the data.
+
 ## CVSS Visual Mapping
 This data visualization provides a breakdown of how the CVSS-B, CVSS-BT and CVSS enriched temporal metrics map to the defined OSINT sources as of November 25th, 2023
 ![CVSS-BT Mapping](CVSS-BT-Enrichment.png)
