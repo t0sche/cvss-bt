@@ -65,7 +65,8 @@ def build_flows(df):
 def _layout(totals, order):
     """Stack nodes top-down in a fixed order; heights are shares of the unit column."""
     present = [k for k in order if totals.get(k, 0) > 0]
-    usable = 1 - NODE_GAP * (len(present) - 1)
+    # Reserve gaps for every category so columns keep one count-to-height scale.
+    usable = 1 - NODE_GAP * (len(order) - 1)
     grand = sum(totals[k] for k in present)
     nodes, y = {}, 1.0
     for k in present:
