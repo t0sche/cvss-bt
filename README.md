@@ -49,12 +49,12 @@ This repository continuously enriches and publishes CVSS Temporal Scores based o
 
 ## Accessing the Data
 
-The CVSS-BT dataset contains over 328,000 CVEs with enriched temporal scores and is available in both CSV and Parquet formats.
+The CVSS-BT dataset covers all non-rejected CVEs in NVD with enriched temporal scores and is published daily in both CSV and Parquet formats.
 
 ### Download from Releases
 
 Download the latest data files from the [Releases page](https://github.com/t0sche/cvss-bt/releases/latest):
-- **cvss-bt.csv** - Full dataset in CSV format (~70 MB)
+- **cvss-bt.csv** - Full dataset in CSV format (large; tens of MB)
 - **cvss-bt.parquet** - Full dataset in Parquet format (smaller, more efficient)
 
 You can also download programmatically:
