@@ -3,3 +3,4 @@ pandas
 requests
 ijson
 pyarrow
+matplotlib

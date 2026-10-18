@@ -88,7 +88,7 @@ git clone https://github.com/t0sche/cvss-bt.git
 **Note:** The CSV file is large and will not render on GitHub's web interface. Download the file or clone the repository to view the data.
 
 ## CVSS Visual Mapping
-This data visualization provides a breakdown of how the CVSS-B, CVSS-BT and CVSS enriched temporal metrics map to the defined OSINT sources as of November 25th, 2023
+This diagram is regenerated with every daily release. It shows how each CVE's CVSS base severity changes once threat intelligence is applied (CVSS-BT severity), and which exploit maturity drove that change. Generate it locally with `python code/generate_sankey.py`.
 ![CVSS-BT Mapping](CVSS-BT-Enrichment.png)
 
 ## Acknowledgements
