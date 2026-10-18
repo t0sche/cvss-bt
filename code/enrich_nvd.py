@@ -111,6 +111,19 @@ def extract_cves_from_github(url):
     return list(unique_cves)
 
 
+def validate_kev_catalog(data):
+    """
+    Raise ValueError unless the catalog has a non-empty vulnerabilities list of well-formed CVE IDs,
+    so an empty or corrupted 200 response falls through to the next source instead of clearing flags.
+    """
+    vulns = data.get('vulnerabilities') if isinstance(data, dict) else None
+    if not isinstance(vulns, list) or not vulns:
+        raise ValueError('KEV catalog has no vulnerabilities list')
+    cve_pattern = re.compile(r"CVE-\d{4}-\d{4,7}")
+    if not all(isinstance(v, dict) and cve_pattern.fullmatch(str(v.get('cveID', ''))) for v in vulns):
+        raise ValueError('KEV catalog has entries without a valid cveID')
+
+
 def get_kev_data():
     """
     Fetch the CISA KEV catalog from CISA's GitHub mirror, falling back to cisa.gov.
@@ -121,6 +134,7 @@ def get_kev_data():
             response = requests.get(url, timeout=60)
             response.raise_for_status()
             data = response.json()
+            validate_kev_catalog(data)
             print(f"Loaded CISA KEV catalog {data.get('catalogVersion')} ({data.get('count')} CVEs) from {url}")
             return data
         except (requests.RequestException, ValueError) as e:
