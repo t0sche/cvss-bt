@@ -59,6 +59,10 @@ jobs:
       run: |
         python -u code/generate_parquet.py
 
+    - name: Generate Sankey Diagram
+      run: |
+        python -u code/generate_sankey.py cvss-bt.csv CVSS-BT-Enrichment.png
+
     - name: setup git config
       run: |
         git config user.name "GitHub Actions Bot"
@@ -71,7 +75,7 @@ jobs:
 
     - name: Commit and push if there are changes
       run: |
-        git add cvss-bt.csv code/last_run.txt
+        git add cvss-bt.csv code/last_run.txt CVSS-BT-Enrichment.png
         git commit -m "Updated CVSS-BT data $(date +%Y-%m-%d)" -a || exit 0
         git push origin HEAD:main
         tag="${{ steps.generate_tag.outputs.tag }}"
