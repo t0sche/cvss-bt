@@ -95,3 +95,8 @@ jobs:
         asset_path: ./cvss-bt.csv
         asset_name: cvss-bt.csv
         asset_content_type: text/plain
+
+    # Runs after publishing so EPSS updates still ship; a failure flags a stale NVD backup.
+    - name: Check Freshness
+      run: |
+        python -u code/check_freshness.py cvss-bt.csv
