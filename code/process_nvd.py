@@ -1,10 +1,11 @@
-from datetime import datetime, date
+from datetime import datetime, timezone
 from pathlib import Path
 import pandas as pd
 import enrich_nvd
 import ijson
 
-EPSS_CSV = f'https://epss.empiricalsecurity.com/epss_scores-{date.today()}.csv.gz'
+EPSS_DATE = datetime.now(timezone.utc).date()
+EPSS_CSV = f'https://raw.githubusercontent.com/empiricalsec/epss_scores/main/{EPSS_DATE.year}/epss_scores-{EPSS_DATE}.csv.gz'
 TIMESTAMP_FILE = './code/last_run.txt'
 
 def process_nvd_files():
