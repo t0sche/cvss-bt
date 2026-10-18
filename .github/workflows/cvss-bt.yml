@@ -48,7 +48,12 @@ jobs:
       env:
         VULNCHECK_API_KEY: ${{ secrets.VULNCHECK_API_KEY }}
       run: |
+        cp cvss-bt.csv "$RUNNER_TEMP/previous-cvss-bt.csv"
         python -u code/process_nvd.py
+
+    - name: Check Completeness
+      run: |
+        python -u code/check_completeness.py "$RUNNER_TEMP/previous-cvss-bt.csv" cvss-bt.csv
 
     - name: Generate Parquet File
       run: |
@@ -105,3 +110,8 @@ jobs:
         asset_path: ./cvss-bt.parquet
         asset_name: cvss-bt.parquet
         asset_content_type: application/octet-stream
+
+    # Runs after publishing so EPSS updates still ship; a failure flags a stale NVD backup.
+    - name: Check Freshness
+      run: |
+        python -u code/check_freshness.py cvss-bt.csv
