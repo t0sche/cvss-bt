@@ -48,7 +48,12 @@ jobs:
       env:
         VULNCHECK_API_KEY: ${{ secrets.VULNCHECK_API_KEY }}
       run: |
+        cp cvss-bt.csv "$RUNNER_TEMP/previous-cvss-bt.csv"
         python -u code/process_nvd.py
+
+    - name: Check Completeness
+      run: |
+        python -u code/check_completeness.py "$RUNNER_TEMP/previous-cvss-bt.csv" cvss-bt.csv
 
     - name: setup git config
       run: |
