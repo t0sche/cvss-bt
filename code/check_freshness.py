@@ -20,6 +20,10 @@ def newest_published(path):
     return pd.to_datetime(dates, utc=True).max().to_pydatetime()
 
 
+def is_stale(newest, as_of):
+    return as_of - newest > timedelta(days=MAX_AGE_DAYS)
+
+
 if __name__ == '__main__':
     if len(sys.argv) not in (2, 3):
         sys.exit(f'Usage: {sys.argv[0]} <current.csv> [as-of ISO timestamp]')
@@ -29,7 +33,7 @@ if __name__ == '__main__':
     age = as_of - newest
     print(f'Newest CVE published {newest:%Y-%m-%dT%H:%MZ}, {age.total_seconds() / 86400:.1f} days before {as_of:%Y-%m-%dT%H:%MZ}')
 
-    if age > timedelta(days=MAX_AGE_DAYS):
+    if is_stale(newest, as_of):
         print(f'Freshness check FAILED: NVD input looks stale (older than {MAX_AGE_DAYS} days)')
         sys.exit(1)
     print('Freshness check passed')
