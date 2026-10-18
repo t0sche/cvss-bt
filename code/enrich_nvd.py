@@ -9,7 +9,8 @@ EPSS_CSV = 'data/epss/epss_scores.csv'
 METASPLOIT_JSON = 'https://raw.githubusercontent.com/rapid7/metasploit-framework/master/db/modules_metadata_base.json'
 NUCLEI_JSON = 'https://raw.githubusercontent.com/projectdiscovery/nuclei-templates/main/cves.json'
 EXPLOITDB_CSV = 'https://gitlab.com/exploit-database/exploitdb/-/raw/main/files_exploits.csv'
-KEV_JSON = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+KEV_JSON = "https://raw.githubusercontent.com/cisagov/kev-data/develop/known_exploited_vulnerabilities.json"
+KEV_JSON_FALLBACK = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
 POC_GITHUB = "https://raw.githubusercontent.com/nomi-sec/PoC-in-GitHub/master/README.md"
 VULNCHECK_KEV = 'https://api.vulncheck.com/v3/index/vulncheck-kev'
 VULNCHECK_API_KEY = os.environ.get('VULNCHECK_API_KEY')
@@ -26,8 +27,7 @@ def enrich(df, epss_df):
     """
 
     #Load KEV Data
-    response = requests.get(KEV_JSON)
-    kev_json_data = response.json()
+    kev_json_data = get_kev_data()
     kev_cve_list = []
     for vuln in kev_json_data.get('vulnerabilities'):
         kev_cve_list.append(vuln.get('cveID'))
@@ -109,6 +109,23 @@ def extract_cves_from_github(url):
     cve_matches = re.findall(cve_pattern, content)
     unique_cves = set(cve_matches)
     return list(unique_cves)
+
+
+def get_kev_data():
+    """
+    Fetch the CISA KEV catalog from CISA's GitHub mirror, falling back to cisa.gov.
+    Raises if both fail so a missing catalog never silently clears every cisa_kev flag.
+    """
+    for url in (KEV_JSON, KEV_JSON_FALLBACK):
+        try:
+            response = requests.get(url, timeout=60)
+            response.raise_for_status()
+            data = response.json()
+            print(f"Loaded CISA KEV catalog {data.get('catalogVersion')} ({data.get('count')} CVEs) from {url}")
+            return data
+        except (requests.RequestException, ValueError) as e:
+            print(f"Failed to load CISA KEV from {url}: {e}")
+    raise RuntimeError('Could not load the CISA KEV catalog from any source')
 
 
 def get_vulncheck_data():
