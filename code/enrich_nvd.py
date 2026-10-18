@@ -33,7 +33,7 @@ def enrich(df, epss_df):
         kev_cve_list.append(vuln.get('cveID'))
     kev_df = pd.DataFrame(kev_cve_list, columns=['cve'])
     kev_df['cisa_kev'] = True
-    
+
     #Load VulnCheck KEV
     vulncheck_kev = get_vulncheck_data()
     vulncheck_kev_df = pd.DataFrame(vulncheck_kev, columns=['cve'])
@@ -73,7 +73,7 @@ def enrich(df, epss_df):
 
     print('Mapping KEV Data')
     df = pd.merge(df, kev_df, on='cve', how='left')
-    
+
     print('Mapping VulnCheck KEV Data')
     df = pd.merge(df, vulncheck_kev_df, on='cve', how='left')
 
@@ -90,8 +90,10 @@ def enrich(df, epss_df):
     df = pd.merge(df, poc_githib_df, on='cve', how='left')
 
     df = df.drop_duplicates(subset='cve')
-    # Fill NaN values with False
-    df.fillna(False, inplace=True)
+    # Fill NaN values appropriately for each column type
+    bool_columns = ['cisa_kev', 'vulncheck_kev', 'exploitdb', 'metasploit', 'nuclei', 'poc_github']
+    df[bool_columns] = df[bool_columns].fillna(False)
+    df['epss'] = df['epss'].fillna(0.0)
     return df
 
 
@@ -151,9 +153,10 @@ def update_temporal_score(df, epss_threshold):
     df.loc[condition_ep4 & (df['cvss_version'].astype(str) == '4.0'), 'exploit_maturity'] = 'E:P'
 
     # Update vector with exploit maturity
-    #Remove "E:X" from base vector if it exists
-    df['cvss-bt_vector'] = df.apply(lambda row: f"{row['base_vector']}/{row['exploit_maturity']}" if 'E:X' not in row['base_vector'] and row['base_vector'] != 'N/A' \
-                                                   else row['base_vector'].replace('/E:X', f"/{row['exploit_maturity']}") if row['base_vector'] != 'N/A' \
+    # Replace "E:" from base vector if it exists
+    exploit_maturity_re = re.compile(r'/E:(POC|[AHFPUX])')
+    df['cvss-bt_vector'] = df.apply(lambda row: f"{row['base_vector']}/{row['exploit_maturity']}" if '/E:' not in row['base_vector'] and row['base_vector'] != 'N/A' \
+                                                   else exploit_maturity_re.sub(f"/{row['exploit_maturity']}", row['base_vector']) if row['base_vector'] != 'N/A' \
                                                    else row['base_vector'], axis=1)
 
     # Apply CVSS computation
