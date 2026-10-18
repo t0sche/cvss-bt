@@ -100,5 +100,5 @@ This product uses EPSS scores but is not endoresed or certified by the EPSS SIG.
 # Support this project
 If you'd like to financially support this project, feel free to donate below.
 
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/stephenshaffer)
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/stephenshaffer)
 
